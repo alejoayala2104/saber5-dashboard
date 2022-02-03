@@ -48,38 +48,38 @@ CONTENT_STYLE = {
 
 #----------------LECTURA DE ARCHIVOS PLANOS----------------
 #-------Zonas---------------
-deptosZonas = pd.read_csv('dashboardsp5/csv/deptoszonas.csv',sep='|',encoding='utf-8',header=0,usecols=[1,10])
+deptosZonas = pd.read_csv('csv/deptoszonas.csv',sep='|',encoding='utf-8',header=0,usecols=[1,10])
 #-------Departamentos-------
 #Lenguaje
-deptosLen = pd.read_csv('dashboardsp5/csv/Departamento/Lenguaje_Grado5_2017_Depto.csv',sep='|',encoding='utf-8',header=0)
+deptosLen = pd.read_csv('csv/Departamento/Lenguaje_Grado5_2017_Depto.csv',sep='|',encoding='utf-8',header=0)
 #Matemáticas
-deptosMat = pd.read_csv('dashboardsp5/csv/Departamento/Matematicas_Grado5_2017_Depto.csv',sep='|',encoding='utf-8',header=0)
+deptosMat = pd.read_csv('csv/Departamento/Matematicas_Grado5_2017_Depto.csv',sep='|',encoding='utf-8',header=0)
 
 #-------Entidades territoriales-------
-enterritorialesCSV = pd.read_csv('dashboardsp5/csv/entidadesterritoriales.csv',sep='|',encoding='utf-8',header=0,usecols=[0,1,2,3])
+enterritorialesCSV = pd.read_csv('csv/entidadesterritoriales.csv',sep='|',encoding='utf-8',header=0,usecols=[0,1,2,3])
 #Lenguaje
-entLen = pd.read_csv('dashboardsp5/csv/Entidad Territorial/Lenguaje_Grado5_2017_ETC.csv',sep='|',encoding='utf-8',header=0)
+entLen = pd.read_csv('csv/Entidad Territorial/Lenguaje_Grado5_2017_ETC.csv',sep='|',encoding='utf-8',header=0)
 #Matemáticas
-entMat = pd.read_csv('dashboardsp5/csv/Entidad Territorial/Matematicas_Grado5_2017_ETC.csv',sep='|',encoding='utf-8',header=0)
+entMat = pd.read_csv('csv/Entidad Territorial/Matematicas_Grado5_2017_ETC.csv',sep='|',encoding='utf-8',header=0)
 
 #-------Municipios-------
 #Lenguaje
-mpioLen = pd.read_csv('dashboardsp5/csv/Municipios/Lenguaje_Grado5_2017_Municipio.csv',sep='|',encoding='utf-8',header=0)
+mpioLen = pd.read_csv('csv/Municipios/Lenguaje_Grado5_2017_Municipio.csv',sep='|',encoding='utf-8',header=0)
 #Matemáticas
-mpioMat = pd.read_csv('dashboardsp5/csv/Municipios/Matematicas_Grado5_2017_Municipio.csv',sep='|',encoding='utf-8',header=0)
+mpioMat = pd.read_csv('csv/Municipios/Matematicas_Grado5_2017_Municipio.csv',sep='|',encoding='utf-8',header=0)
 
 #-------Establecimientos--------
-estInfo = pd.read_csv('dashboardsp5/csv/Establecimiento/Información_Complementaria_2017_EE.csv',sep='|',encoding='utf-8',header=0)
-estLen = pd.read_csv('dashboardsp5/csv/Establecimiento/Lenguaje_Grado5_2017_EE_Completo.csv',sep='|',encoding='utf-8',header=0)
-estMat = pd.read_csv('dashboardsp5/csv/Establecimiento/Matematicas_Grado5_2017_EE_Completo.csv',sep='|',encoding='utf-8',header=0)
+estInfo = pd.read_csv('csv/Establecimiento/Información_Complementaria_2017_EE.csv',sep='|',encoding='utf-8',header=0)
+estLen = pd.read_csv('csv/Establecimiento/Lenguaje_Grado5_2017_EE_Completo.csv',sep='|',encoding='utf-8',header=0)
+estMat = pd.read_csv('csv/Establecimiento/Matematicas_Grado5_2017_EE_Completo.csv',sep='|',encoding='utf-8',header=0)
 
 #--------Sede---------
-sedeInfo = pd.read_csv('dashboardsp5/csv/Sede/Información_Complementaria_2017_Sede.csv',sep='|',encoding='utf-8',header=0)
-sedeLen = pd.read_csv('dashboardsp5/csv/Sede/Lenguaje_Grado5_2017_Sede.csv',sep='|',encoding='utf-8',header=0)
-sedeMat =pd.read_csv('dashboardsp5/csv/Sede/Matematicas_Grado5_2017_Sede.csv',sep='|',encoding='utf-8',header=0)
+sedeInfo = pd.read_csv('csv/Sede/Información_Complementaria_2017_Sede.csv',sep='|',encoding='utf-8',header=0)
+sedeLen = pd.read_csv('csv/Sede/Lenguaje_Grado5_2017_Sede.csv',sep='|',encoding='utf-8',header=0)
+sedeMat =pd.read_csv('csv/Sede/Matematicas_Grado5_2017_Sede.csv',sep='|',encoding='utf-8',header=0)
 
 #--------Valores Plausibles---------
-valPlau = pd.read_csv('dashboardsp5\csv\Valores Plausibles\ValoresPlausibles_Grado5_2017.csv',sep='|',encoding='utf-8',header=0,nrows=1000)
+valPlau = pd.read_csv('csv\Valores Plausibles\ValoresPlausibles_Grado5_2017.csv',sep='|',encoding='utf-8',header=0,nrows=1000)
 valPlauDict = valPlau.to_dict('records')
 #----------------VARIABLES PARA DROPDOWNS---------------------
 #Dp de competencias (global)
@@ -139,7 +139,7 @@ menu = html.Div(
             [
                 #exact significa que active=True cuando el pathName sea igual a href
                 #href es la ruta que va a tener la página
-                dbc.NavLink("Inicio", href="/",active="exact"),
+                dbc.NavLink("Análisis", href="/",active="exact"),
                 dbc.NavLink("Departamento", href="/departamento",active="exact"),
                 dbc.NavLink("Entidad territorial", href="/entidadter",active="exact"),
                 dbc.NavLink("Municipio", href="/municipio",active="exact"),
@@ -172,7 +172,8 @@ app.layout = html.Div([
 def update_contenido_pagina(pathname):
     if pathname == "/":#Si no tiene pathname como tal, se muestra el inicio
         return [
-                html.H1('Inicio', style={'textAlign':'center'}),
+                html.H1('Análisis de datos', style={'textAlign':'center'}),
+                html.P('Separador'),
                 dcc.Input(
                     id='txfsep',
                     type = "text",
@@ -869,7 +870,7 @@ def parse_contents(contents, filename, sepr):
               Input('txfsep', 'value'))
 def update_sep(txfsep):
     if not txfsep:
-        separador = "No se ha ingresado. Por defecto '|'"       
+        separador = "'|' (por defecto)"       
     else:
         separador = str(txfsep)
 
