@@ -30,26 +30,13 @@ from dash import dash_table
 
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
 
-# styling the sidebar
-SIDEBAR_STYLE = {
-    "position": "fixed",
-    "top": 0,
-    "left": 0,
-    "bottom": 0,
-    "width": "16rem",
-    "padding": "2rem 1rem",
-    "background-color": "#f8f9fa",
-}
-
-# padding for the page content
-CONTENT_STYLE = {
-    "margin-left": "18rem",
-    "margin-right": "2rem",
-    "padding": "2rem 1rem",
-}
-
 #----------------LECTURA DE ARCHIVOS PLANOS----------------
 #-------Zonas---------------
+# Lenguaje
+zonasLen = pd.read_csv('csv/Zonas/Lenguaje_Grado5_2017_Zonas.csv',sep='|',encoding='utf-8',header=0,decimal='.')
+#Matemáticas
+zonasMat = pd.read_csv('csv/Zonas/Matematicas_Grado5_2017_Zonas.csv',sep='|',encoding='utf-8',header=0,decimal='.')
+
 deptosZonas = pd.read_csv('csv/deptoszonas.csv',sep='|',encoding='utf-8',header=0,usecols=[1,10])
 #-------Departamentos-------
 #Lenguaje
@@ -99,6 +86,11 @@ consultaSQL = """SELECT DISTINCT DEPARTAMENTO FROM deptosZonas """
 deptos = ps.sqldf(consultaSQL, locals())
 deptosdropdown = [{'label': deptos['DEPARTAMENTO'][i], 'value': deptos['DEPARTAMENTO'][i]} for i in deptos.index] #Forma para generar la lista de diccionarios para el dropdown de Dash
 
+#Dp de zonas en zonas (es diferente porque este tiene todas las zonas, el anterior tiene todos los departamentos)
+consultaSQL = """SELECT DISTINCT ZONA FROM zonasLen """
+zonaszonas = ps.sqldf(consultaSQL, locals())
+zonaszonasdropdown = [{'label': zonaszonas['ZONA'][i], 'value': zonaszonas['ZONA'][i]} for i in zonaszonas.index]
+
 #Dp de Entidades territoriales
 consultaSQL = """SELECT DISTINCT ENTIDAD FROM enterritorialesCSV """
 enterritoriales = ps.sqldf(consultaSQL, locals())
@@ -143,6 +135,7 @@ menu = html.Div(
                 #href es la ruta que va a tener la página
                 dbc.NavLink("Análisis", href="/",active="exact"),
                 dbc.NavLink("Departamento", href="/departamento",active="exact"),
+                dbc.NavLink("Zona", href="/zona",active="exact"),
                 dbc.NavLink("Entidad territorial", href="/entidadter",active="exact"),
                 dbc.NavLink("Municipio", href="/municipio",active="exact"),
                 dbc.NavLink("Establecimiento", href="/establecimiento",active="exact"),
@@ -151,12 +144,13 @@ menu = html.Div(
             ],
             vertical=True,
             pills=True,  
+            className="menu"
         ),   
     ],
-    style=SIDEBAR_STYLE,
+    className="contenedor-menu"
 )
 
-content = html.Div(id="page-content", children=[], style=CONTENT_STYLE)
+content = html.Div(id="page-content", children=[],className="contenido-pestana")
 
 app.layout = html.Div([
     dcc.Location(id="url"),
@@ -174,7 +168,7 @@ app.layout = html.Div([
 def update_contenido_pagina(pathname):
     if pathname == "/":#Si no tiene pathname como tal, se muestra el inicio
         return [
-                html.H1('Análisis de datos', style={'textAlign':'center'}),
+                html.H1('Análisis de datos'),
                 html.P('Separador'),
                 dcc.Input(
                     id='txfsep',
@@ -224,40 +218,58 @@ def update_contenido_pagina(pathname):
             placeholder="Elija un departamento..."
         )
 
-        tabsVistas = html.Div(id='div-tabs-vistas',children=[
+        # Tabs que contiene la tabla y los gráficos.
+        tabsVistasDepto = html.Div(id='div-tabs-vistas',children=[
             dbc.Tabs(
                 [
-                    dbc.Tab(label="Tabla", tab_id="tab_tabla"),
-                    dbc.Tab(label="Gráfico", tab_id="tab_grafico"),
+                    dbc.Tab(label="Tabla", tab_id="tab-tabla-depto"),
+                    dbc.Tab(label="Gráfico", tab_id="tab-grafico-depto"),
                 ],
-                id="tabs-vistas",
-                active_tab="tab_tabla",
+                id="tabs-vistas-depto",
+                active_tab="tab-tabla-depto",
             ),
-            html.Div(id='content-tabs-vistas'),
+            html.Div(id='content-tabs-vistas-depto'),
         ])
 
-        tabsComp = html.Div(id='div-tabs-comp',children=[
+        # Tabs que filtra por compentencia y tiene adentro a tabsVistas
+        tabsCompDepto = html.Div(id='div-tabs-comp',children=[
             dbc.Tabs(
                 [
-                    dbc.Tab(label="Lenguaje", tab_id="tab_len"),
-                    dbc.Tab(label="Matemáticas", tab_id="tab_mat"),
+                    dbc.Tab(label="Lenguaje", tab_id="tab-len-depto"),
+                    dbc.Tab(label="Matemáticas", tab_id="tab-mat-depto"),
                 ],
-                id="tabs-comp",
-                active_tab="tab_len",
+                id="tabs-comp-depto",
+                active_tab="tab-len-depto",
             ),
-            html.Div(id='content-tabs-comp', children=tabsVistas),
+            html.Div(id='content-tabs-comp-depto', children=tabsVistasDepto),
         ])
 
         return html.Div([
             header,
             deptoZonasDropdown,
             deptoDeptoDropdown,
-            tabsComp
+            tabsCompDepto
         ])
         
+    elif pathname == "/zona":
+
+        header =  html.Div(className='header', children=[
+            html.H1(children='Zona'),
+        ])
+
+        zonasZonasDropdown = dcc.Dropdown(
+            id='zonaszonas',
+            options=zonaszonasdropdown,
+            value='Todas las zonas',
+            placeholder="Elija una zona..."
+        )
+        return [
+            header,
+            zonasZonasDropdown
+        ]
     elif pathname == "/entidadter":
         return [
-                html.H1('Entidad Territorial', style={'textAlign':'center'}),
+                html.H1('Entidad Territorial'),
                 dcc.Dropdown(
                     id='etdropdown',
                     options=entdropdown,
@@ -280,7 +292,7 @@ def update_contenido_pagina(pathname):
         ]
     elif pathname == "/municipio":
         return [
-                html.H1('Municipio', style={'textAlign':'center'}),
+                html.H1('Municipio'),
                 dcc.Dropdown(
                     id='mpiodddepto',
                     options=deptosdpenmpios,
@@ -307,7 +319,7 @@ def update_contenido_pagina(pathname):
         ]
     elif pathname == "/establecimiento":
         return [
-                html.H1('Establecimiento', style={'textAlign':'center'}),
+                html.H1('Establecimiento'),
                 dcc.Dropdown(
                     id='estestablmtos',
                     options=estdropdown,
@@ -329,7 +341,7 @@ def update_contenido_pagina(pathname):
         ]
     elif pathname == "/sede":
         return [
-                html.H1('Sede', style={'textAlign':'center'}),
+                html.H1('Sede'),
                 dcc.Dropdown(
                     id='sedeestablmtos',
                     options=estdropdownsedes,
@@ -360,7 +372,7 @@ def update_contenido_pagina(pathname):
         ]
     elif pathname == "/valplausibles":
         return [
-                html.H1('Valores plausibles', style={'textAlign':'center'}),
+                html.H1('Valores plausibles'),
                 html.Br(id='', className='', children=[]),
                 dash_table.DataTable(
                     id='valplautable',
@@ -411,17 +423,17 @@ def update_dp(deptodepto_options):
 # Actualiza el contenido del tabs vistas dependiendo de si se elige tabla o gráficos y dependiendo de si se eligió Lenguaje o Matemáticas.
 # Recibe como input el dropdown del departamento seleccionado y la tab activa de tabs comp. También recibe la tab activa de tabs vista.
 @app.callback(
-    Output('content-tabs-vistas','children'),
+    Output('content-tabs-vistas-depto','children'),
     [Input(component_id='deptodepto', component_property='value'),
-    Input('tabs-comp','active_tab'),
-    Input('tabs-vistas','active_tab')]
+    Input('tabs-comp-depto','active_tab'),
+    Input('tabs-vistas-depto','active_tab')]
  )
-def actualizar_info_deptos(deptodepto,tabsCompActiva, tabsVistasActiva):
+def actualizar_info_deptos(deptodepto,tabsCompActiva,tabsVistasActiva):
 
     #Copia de los dataframes dependiendo de la competencia elegida.
-    if tabsCompActiva == "tab_len":
+    if tabsCompActiva == "tab-len-depto":
         dffdeptos = deptosLen
-    elif tabsCompActiva == "tab_mat":
+    elif tabsCompActiva == "tab-mat-depto":
         dffdeptos = deptosMat
 
     # La tabla recibe en su atributo data un diccionario con las tuplas que se van a mostrar. Se ha creado una tupla con la información de todos los departamentos reunida, entonces se debe verificar si esa opción fue escogida.
@@ -485,9 +497,9 @@ def actualizar_info_deptos(deptodepto,tabsCompActiva, tabsVistasActiva):
     ])
 
     # Retorna el contenedor correspondiente a la tab seleccionada.
-    if tabsVistasActiva == 'tab_tabla':
+    if tabsVistasActiva == 'tab-tabla-depto':
         return contenedorTabla
-    elif tabsVistasActiva == 'tab_grafico':
+    elif tabsVistasActiva == 'tab-grafico-depto':
         return contenedorGraficos
          
  
@@ -549,7 +561,6 @@ def update_graphDeptos(deptodepto,deptocomp):
 
     return (h1,div,barDepto,pieDepto,lineDepto)
 '''
-
 
 #---------------CALLBACKS EN ENTIDAD TERRITORIAL------------#
 #Actualiza los gráficos según el departamento seleccionado.
