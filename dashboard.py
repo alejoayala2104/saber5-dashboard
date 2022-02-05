@@ -1,5 +1,7 @@
+from cProfile import label
 from math import pi
 from os import sep
+from pydoc import classname
 import dash
 from dash.html.H1 import H1
 from dash.html.H4 import H4
@@ -205,33 +207,54 @@ def update_contenido_pagina(pathname):
                 html.Div(id='info-atributo'),
         ]
     elif pathname == "/departamento":
-        return [ 
-                html.H1('Departamento', style={'textAlign':'center'}),
-                dcc.Dropdown(
-                    id='deptozonas',
-                    options=zonasdropdown,
-                    value='Orinoquia',
-                    placeholder="Elija una zona..."
-                ),
-                dcc.Dropdown(
-                    id='deptodepto',
-                    placeholder="Elija un departamento..."
-                ),                
-                dcc.Dropdown(
-                    id='deptocomp',
-                    options= compdropdowns,
-                    value='Lenguaje',
-                    placeholder='Seleccione la competencia...'
-                ),
-                html.Div([ #Lo que se muestra al seleccionar depto             
-                html.H1(id='h1Depto', className='', children=''),
-                html.Div(id='divInfoDepto', className='', children=[]),
-                dcc.Graph(id='barDepto'),
-                dcc.Graph(id='pieDepto'),
-                dcc.Graph(id='lineDepto')
-                ])
-                
-        ]
+
+        header =  html.Div(className='header', children=[
+            html.H1(children='Departamento'),
+        ])
+
+        deptoZonasDropdown = dcc.Dropdown(
+            id='deptozonas',
+            options=zonasdropdown,
+            value='Todos los departamentos',
+            placeholder="Elija una zona..."
+        )
+
+        deptoDeptoDropdown = dcc.Dropdown(
+            id='deptodepto',
+            placeholder="Elija un departamento..."
+        )
+
+        tabsVistas = html.Div(id='div-tabs-vistas',children=[
+            dbc.Tabs(
+                [
+                    dbc.Tab(label="Tabla", tab_id="tab_tabla"),
+                    dbc.Tab(label="Gráfico", tab_id="tab_grafico"),
+                ],
+                id="tabs-vistas",
+                active_tab="tab_tabla",
+            ),
+            html.Div(id='content-tabs-vistas'),
+        ])
+
+        tabsComp = html.Div(id='div-tabs-comp',children=[
+            dbc.Tabs(
+                [
+                    dbc.Tab(label="Lenguaje", tab_id="tab_len"),
+                    dbc.Tab(label="Matemáticas", tab_id="tab_mat"),
+                ],
+                id="tabs-comp",
+                active_tab="tab_len",
+            ),
+            html.Div(id='content-tabs-comp', children=tabsVistas),
+        ])
+
+        return html.Div([
+            header,
+            deptoZonasDropdown,
+            deptoDeptoDropdown,
+            tabsComp
+        ])
+        
     elif pathname == "/entidadter":
         return [
                 html.H1('Entidad Territorial', style={'textAlign':'center'}),
@@ -377,13 +400,98 @@ def update_dp(zona_seleccionada):
     deptosdropdown = [{'label': deptosZonasCopy['DEPARTAMENTO'][i], 'value': deptosZonasCopy['DEPARTAMENTO'][i]} for i in deptosZonasCopy.index]
     return deptosdropdown
     
-#Callback que actualiza las opciones del dropdown de departamentos (en zonas).
+#Actualiza las opciones del dropdown de departamentos (en zonas).
 @app.callback(
     dash.dependencies.Output('deptodepto', 'value'),
     [dash.dependencies.Input('deptodepto', 'options')])
 def update_dp(deptodepto_options):
     return deptodepto_options[0]['value']
  
+
+# Actualiza el contenido del tabs vistas dependiendo de si se elige tabla o gráficos y dependiendo de si se eligió Lenguaje o Matemáticas.
+# Recibe como input el dropdown del departamento seleccionado y la tab activa de tabs comp. También recibe la tab activa de tabs vista.
+@app.callback(
+    Output('content-tabs-vistas','children'),
+    [Input(component_id='deptodepto', component_property='value'),
+    Input('tabs-comp','active_tab'),
+    Input('tabs-vistas','active_tab')]
+ )
+def actualizar_info_deptos(deptodepto,tabsCompActiva, tabsVistasActiva):
+
+    #Copia de los dataframes dependiendo de la competencia elegida.
+    if tabsCompActiva == "tab_len":
+        dffdeptos = deptosLen
+    elif tabsCompActiva == "tab_mat":
+        dffdeptos = deptosMat
+
+    # La tabla recibe en su atributo data un diccionario con las tuplas que se van a mostrar. Se ha creado una tupla con la información de todos los departamentos reunida, entonces se debe verificar si esa opción fue escogida.
+
+    # Filtra según el departamento escogido
+    selDepto = dffdeptos[dffdeptos['DEPARTAMENTO']==deptodepto] 
+
+    # Muestra todos los departamentos en la tabla
+    if 'Todos los departamentos'==deptodepto:
+        tablaData = dffdeptos
+    else:
+        tablaData = selDepto
+
+
+    #Se ajusta el dataframe para los gráficos.
+    dffPorcentajes = selDepto.filter(like="PORCENTAJE").transpose()    
+    dffPorcentajes.reset_index(inplace = True)    
+    dffPorcentajes.rename(columns = {'index':'RENDIMIENTO'}, inplace = True)
+    dffPorcentajes.rename(columns={dffPorcentajes.columns[1]: 'PORCENTAJE'}, inplace = True)
+    
+    # Contenedor de información general y tabla
+    contenedorTabla = html.Div([
+        html.H2(children=deptodepto),
+        html.Div([
+            html.Hr(),
+            html.P('Número de participantes: ' + str(*selDepto['N'].values)),
+            html.P('Puntaje promedio: ' + str(*selDepto['PUNTAJE_PROMEDIO'].values)),
+            html.P('Desviación: ' + str(*selDepto['DESVIACION'].values))
+        ]),
+
+        # Creación de la tabla con el dataframe de la competencia escogida.
+        dash_table.DataTable(
+            id = 'tabla-info',
+            data=tablaData.to_dict('records'),
+            columns=[{'name': i, 'id': i,"selectable": True} for i in tablaData.columns],
+            sort_action="native",
+            sort_mode="multi",
+            fixed_rows={'headers': True},
+            page_size=10, 
+            style_cell={
+                'minWidth': 250, 'maxWidth': 250, 'width': 250
+            },      
+        ),
+    ])
+
+    # Creación de los gráficos con el dataframe de la competencia escogida.
+    # Gráfico de barras
+    barDepto = px.bar(
+        data_frame=dffPorcentajes,      
+        x = 'RENDIMIENTO',
+        y = 'PORCENTAJE',
+    )
+    
+    # Contiene el gráfico seleccionado.
+    contenedorGraficos =html.Div([
+        html.H2(id='', className='', children='Grafico'),
+        dcc.Graph(
+            id='grafico-barras',
+            figure=barDepto,
+        )
+    ])
+
+    # Retorna el contenedor correspondiente a la tab seleccionada.
+    if tabsVistasActiva == 'tab_tabla':
+        return contenedorTabla
+    elif tabsVistasActiva == 'tab_grafico':
+        return contenedorGraficos
+         
+ 
+'''
 #Actualiza los gráficos según el departamento seleccionado.
 @app.callback(
     Output(component_id='h1Depto', component_property='children'),
@@ -401,8 +509,11 @@ def update_graphDeptos(deptodepto,deptocomp):
         dffdeptos = deptosMat
     else:
         dffdeptos = deptosLen
+
     
     selDepto = dffdeptos[dffdeptos['DEPARTAMENTO']==deptodepto] #Si se seleccionó
+   
+
     h1 = html.H2(deptodepto)
 
     div = html.Div([
@@ -417,7 +528,7 @@ def update_graphDeptos(deptodepto,deptocomp):
     dffPorcentajes.reset_index(inplace = True)    
     dffPorcentajes.rename(columns = {'index':'RENDIMIENTO'}, inplace = True)
     dffPorcentajes.rename(columns={dffPorcentajes.columns[1]: 'PORCENTAJE'}, inplace = True)
-    
+
     #Se configura los gráficos
     barDepto = px.bar(
         data_frame=dffPorcentajes,      
@@ -437,8 +548,9 @@ def update_graphDeptos(deptodepto,deptocomp):
     )
 
     return (h1,div,barDepto,pieDepto,lineDepto)
- 
-    
+'''
+
+
 #---------------CALLBACKS EN ENTIDAD TERRITORIAL------------#
 #Actualiza los gráficos según el departamento seleccionado.
 @app.callback(
@@ -862,7 +974,6 @@ def parse_contents(contents, filename, sepr):
         ),
   
         html.Hr(),  # horizontal line
-
     ])
 
 #Actualiza el separador
