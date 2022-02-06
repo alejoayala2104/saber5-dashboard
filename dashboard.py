@@ -1,14 +1,6 @@
-from cProfile import label
-from math import pi
-from os import sep
-from pydoc import classname
-from turtle import color
 import dash
-from dash.html.H1 import H1
-from dash.html.H4 import H4
 import dash_bootstrap_components as dbc
-from dash import html
-from dash import dcc
+from dash import html,dcc,dash_table
 import numpy
 from pandas.core.frame import DataFrame
 import plotly.express as px
@@ -16,11 +8,7 @@ from dash.dependencies import Input, Output, State
 import pandas as pd
 import pandasql as ps
 import base64
-import datetime
 import io
-
-from dash import dash_table
-
 
 #Las siglas de los componentes se ponen dependiendo de 
 #la página a la que pertenecen, por ejemplo, si hay un 
