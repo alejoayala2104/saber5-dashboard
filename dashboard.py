@@ -2,6 +2,7 @@ from cProfile import label
 from math import pi
 from os import sep
 from pydoc import classname
+from turtle import color
 import dash
 from dash.html.H1 import H1
 from dash.html.H4 import H4
@@ -121,6 +122,7 @@ separadores = [
                 {'label':'|', 'value': '|'},
             ]
 global separador
+global dffPorcentajes
 # separador = "|"
 #------------DASHBOARD-----------------
 menu = html.Div(    
@@ -201,6 +203,9 @@ def update_contenido_pagina(pathname):
                 html.Div(id='info-atributo'),
         ]
     elif pathname == "/departamento":
+        
+        # Sirve para guardar los datos que se genera en el callback de creación de la tabla y usarlos en la creación de los gráficos.
+        dataDeptos = dcc.Store(id='data-deptos', storage_type='local')
 
         header =  html.Div(className='header', children=[
             html.H1(children='Departamento'),
@@ -245,6 +250,7 @@ def update_contenido_pagina(pathname):
         ])
 
         return html.Div([
+            dataDeptos,
             header,
             deptoZonasDropdown,
             deptoDeptoDropdown,
@@ -423,6 +429,7 @@ def update_dp(deptodepto_options):
 # Actualiza el contenido del tabs vistas dependiendo de si se elige tabla o gráficos y dependiendo de si se eligió Lenguaje o Matemáticas.
 # Recibe como input el dropdown del departamento seleccionado y la tab activa de tabs comp. También recibe la tab activa de tabs vista.
 @app.callback(
+    Output('data-deptos','data'),
     Output('content-tabs-vistas-depto','children'),
     [Input(component_id='deptodepto', component_property='value'),
     Input('tabs-comp-depto','active_tab'),
@@ -446,13 +453,6 @@ def actualizar_info_deptos(deptodepto,tabsCompActiva,tabsVistasActiva):
         tablaData = dffdeptos
     else:
         tablaData = selDepto
-
-
-    #Se ajusta el dataframe para los gráficos.
-    dffPorcentajes = selDepto.filter(like="PORCENTAJE").transpose()    
-    dffPorcentajes.reset_index(inplace = True)    
-    dffPorcentajes.rename(columns = {'index':'RENDIMIENTO'}, inplace = True)
-    dffPorcentajes.rename(columns={dffPorcentajes.columns[1]: 'PORCENTAJE'}, inplace = True)
     
     # Contenedor de información general y tabla
     contenedorTabla = html.Div([
@@ -478,89 +478,74 @@ def actualizar_info_deptos(deptodepto,tabsCompActiva,tabsVistasActiva):
             },      
         ),
     ])
-
-    # Creación de los gráficos con el dataframe de la competencia escogida.
-    # Gráfico de barras
-    barDepto = px.bar(
-        data_frame=dffPorcentajes,      
-        x = 'RENDIMIENTO',
-        y = 'PORCENTAJE',
-    )
-    
-    # Contiene el gráfico seleccionado.
+       
+    # Se crea el div con el dropdown del tipo de gráfico y el gráfico como componente vacío.
     contenedorGraficos =html.Div([
         html.H2(id='', className='', children='Grafico'),
+
+        # Dropdown para elegir el tipo de gráfico
+        dcc.Dropdown(id='dropdown-graficos',
+            options=[
+                {'label':'Dona', 'value': 'Dona'},
+                {'label':'Barras', 'value': 'Barras'},
+                {'label':'Linea', 'value': 'Linea'}],
+            value='Dona',
+        ),
         dcc.Graph(
-            id='grafico-barras',
-            figure=barDepto,
+            id='grafico-seleccionado',
+            figure={},
         )
     ])
-
-    # Retorna el contenedor correspondiente a la tab seleccionada.
-    if tabsVistasActiva == 'tab-tabla-depto':
-        return contenedorTabla
-    elif tabsVistasActiva == 'tab-grafico-depto':
-        return contenedorGraficos
-         
- 
-'''
-#Actualiza los gráficos según el departamento seleccionado.
-@app.callback(
-    Output(component_id='h1Depto', component_property='children'),
-    Output(component_id='divInfoDepto', component_property='children'),
-    Output(component_id='barDepto', component_property='figure'),
-    Output(component_id='pieDepto', component_property='figure'),
-    Output(component_id='lineDepto', component_property='figure'),
-    [Input(component_id='deptodepto', component_property='value'),
-    Input(component_id='deptocomp', component_property='value')]
-)
-def update_graphDeptos(deptodepto,deptocomp):
-
-    #Copia del dataframe dependiendo de lo que se elija.
-    if deptocomp == 'Matemáticas':
-        dffdeptos = deptosMat
-    else:
-        dffdeptos = deptosLen
-
     
-    selDepto = dffdeptos[dffdeptos['DEPARTAMENTO']==deptodepto] #Si se seleccionó
-   
-
-    h1 = html.H2(deptodepto)
-
-    div = html.Div([
-        html.Hr(),
-        html.H3('Número de participantes: ' + str(*selDepto['N'].values)),
-        html.H3('Puntaje promedio: ' + str(*selDepto['PUNTAJE_PROMEDIO'].values)),
-        html.H3('Desviación: ' + str(*selDepto['DESVIACION'].values))
-    ])
-
-    #Se ajusta el dataframe para los gráficos     
+    #Se ajusta el dataframe para los gráficos. Posteriormente será enviado al callback del dropdown de tipo de gráficos a través de dcc.Store.
     dffPorcentajes = selDepto.filter(like="PORCENTAJE").transpose()    
     dffPorcentajes.reset_index(inplace = True)    
     dffPorcentajes.rename(columns = {'index':'RENDIMIENTO'}, inplace = True)
     dffPorcentajes.rename(columns={dffPorcentajes.columns[1]: 'PORCENTAJE'}, inplace = True)
+    dffPorcentajesDict = dffPorcentajes.to_dict('records')
+    
+    # Retorna el contenedor correspondiente a la tab seleccionada.
+    if tabsVistasActiva == 'tab-tabla-depto':
+        contenedorOutput = contenedorTabla
+    elif tabsVistasActiva == 'tab-grafico-depto':
+        contenedorOutput = contenedorGraficos
+    
+    return dffPorcentajesDict,contenedorOutput
+          
+@app.callback(
+    Output('grafico-seleccionado','figure'),
+    [Input('dropdown-graficos','value'),
+    Input('data-deptos','data')]
+)
+def actualizar_graficos(tipoGrafico,dataDeptos):
+    dffPorcentajes = pd.DataFrame.from_dict(dataDeptos)   
 
-    #Se configura los gráficos
-    barDepto = px.bar(
-        data_frame=dffPorcentajes,      
-        x = 'RENDIMIENTO',
-        y = 'PORCENTAJE',
-    )
-    pieDepto = px.pie(
-        data_frame=dffPorcentajes,
-        names ='RENDIMIENTO',
-        values = 'PORCENTAJE',
-        hole=.3
-    )
-    lineDepto = px.line(
-        data_frame=dffPorcentajes,
-        x = 'RENDIMIENTO',
-        y = 'PORCENTAJE',
-    )
+    if tipoGrafico == 'Barras':
+        figure = px.bar(
+            data_frame=dffPorcentajes,      
+            x = 'RENDIMIENTO',
+            y = 'PORCENTAJE',
+            color='RENDIMIENTO'
+        )
+        # figure.update_layout(showlegend=False) #Esconder el label de X
+        figure.update_xaxes(visible=False) #Esconder los valores de X
+    
+    elif tipoGrafico == 'Dona':
+        figure = px.pie(
+            data_frame=dffPorcentajes,
+            names ='RENDIMIENTO',
+            values = 'PORCENTAJE',
+            hole=.3
+        )
+    else:
+        figure = px.line(
+            data_frame=dffPorcentajes,
+            x = 'RENDIMIENTO',
+            y = 'PORCENTAJE',
+        )
+    
+    return figure
 
-    return (h1,div,barDepto,pieDepto,lineDepto)
-'''
 
 #---------------CALLBACKS EN ENTIDAD TERRITORIAL------------#
 #Actualiza los gráficos según el departamento seleccionado.
