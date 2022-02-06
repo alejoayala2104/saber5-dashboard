@@ -205,7 +205,7 @@ def update_contenido_pagina(pathname):
     elif pathname == "/departamento":
         
         # Sirve para guardar los datos que se genera en el callback de creación de la tabla y usarlos en la creación de los gráficos.
-        dataDeptos = dcc.Store(id='data-deptos', storage_type='local')
+        dataDeptos = dcc.Store(id='data-depto', storage_type='local')
 
         header =  html.Div(className='header', children=[
             html.H1(children='Departamento'),
@@ -259,6 +259,9 @@ def update_contenido_pagina(pathname):
         
     elif pathname == "/zona":
 
+        # Sirve para guardar los datos que se genera en el callback de creación de la tabla y usarlos en la creación de los gráficos.
+        dataZona = dcc.Store(id='data-zona', storage_type='local')
+
         header =  html.Div(className='header', children=[
             html.H1(children='Zona'),
         ])
@@ -269,9 +272,37 @@ def update_contenido_pagina(pathname):
             value='Todas las zonas',
             placeholder="Elija una zona..."
         )
+
+        # Tabs que contiene la tabla y los gráficos.
+        tabsVistasZona = html.Div(id='div-tabs-vistas',children=[
+            dbc.Tabs(
+                [
+                    dbc.Tab(label="Tabla", tab_id="tab-tabla-zona"),
+                    dbc.Tab(label="Gráfico", tab_id="tab-grafico-zona"),
+                ],
+                id="tabs-vistas-zona",
+                active_tab="tab-tabla-zona",
+            ),
+            html.Div(id='content-tabs-vistas-zona'),
+        ])
+
+        # Tabs que filtra por compentencia y tiene adentro a tabsVistas
+        tabsCompZona = html.Div(id='div-tabs-comp',children=[
+            dbc.Tabs(
+                [
+                    dbc.Tab(label="Lenguaje", tab_id="tab-len-zona"),
+                    dbc.Tab(label="Matemáticas", tab_id="tab-mat-zona"),
+                ],
+                id="tabs-comp-zona",
+                active_tab="tab-len-zona",
+            ),
+            html.Div(id='content-tabs-comp-zona', children=tabsVistasZona),
+        ])
         return [
+            dataZona,
             header,
-            zonasZonasDropdown
+            zonasZonasDropdown,
+            tabsCompZona
         ]
     elif pathname == "/entidadter":
         return [
@@ -407,6 +438,75 @@ def update_contenido_pagina(pathname):
         ]
     )
 
+
+
+#------------------------FUNCIONES GENERALES----------------------------
+# Crea un contenedor con una tabla y su información general, o un contenedor con gráficos, dependiendo de la tab activa que reciba como parámetro.
+def contenedorSegunTabActiva(valueDropdown,seleccion,tablaData,tabsVistasActiva,idGrafico):
+
+    # Retorna el contenedor correspondiente a la tab seleccionada.
+    if tabsVistasActiva == 'tab-tabla':
+
+        # Se crea un div con la información general del dataset y una tabla mostrando su contenido.
+        contenedorTabla = html.Div([
+            html.H2(children=valueDropdown),
+            html.Div([
+                html.Hr(),
+                html.P('Número de participantes: ' + str(*seleccion['N'].values)),
+                html.P('Puntaje promedio: ' + str(*seleccion['PUNTAJE_PROMEDIO'].values)),
+                html.P('Desviación: ' + str(*seleccion['DESVIACION'].values))
+            ]),
+
+            # Creación de la tabla con el dataframe de la competencia escogida.
+            dash_table.DataTable(
+                id = 'tabla-info',
+                data=tablaData.to_dict('records'),
+                columns=[{'name': i, 'id': i,"selectable": True} for i in tablaData.columns],
+                sort_action="native",
+                sort_mode="multi",
+                fixed_rows={'headers': True},
+                page_size=10, 
+                style_cell={
+                    'minWidth': 250, 'maxWidth': 250, 'width': 250
+                },
+            ),
+        ])
+
+        return contenedorTabla        
+    elif tabsVistasActiva == 'tab-grafico':
+
+        # Se crea el div con el dropdown del tipo de gráfico y el gráfico como componente vacío.
+        contenedorGraficos =html.Div([
+            html.H2(id='', className='', children='Grafico'),
+
+            # Dropdown para elegir el tipo de gráfico
+            dcc.Dropdown(id='dropdown-graficos',
+                options=[
+                    {'label':'Dona', 'value': 'Dona'},
+                    {'label':'Barras', 'value': 'Barras'},
+                    {'label':'Linea', 'value': 'Linea'}],
+                value='Dona',
+            ),
+            dcc.Graph(
+                id=idGrafico,
+                figure={},
+            )
+        ])
+        
+        return contenedorGraficos
+
+    
+#ajusta el DataFrame recibido para que el gráfico lo entienda. Posteriomente, dicho DataFrame se transforma en dict para cumplir el requerimiento de envío entre callbacks de dcc.Store.
+def generarDataParaGrafico(seleccion):
+    
+    dffPorcentajes = seleccion.filter(like="PORCENTAJE").transpose()    
+    dffPorcentajes.reset_index(inplace = True)    
+    dffPorcentajes.rename(columns = {'index':'RENDIMIENTO'}, inplace = True)
+    dffPorcentajes.rename(columns={dffPorcentajes.columns[1]: 'PORCENTAJE'}, inplace = True)
+    dffPorcentajesDict = dffPorcentajes.to_dict('records')
+
+    return dffPorcentajesDict
+
 #---------------CALLBACKS EN DEPARTAMENTOS------------#
 #Actualiza los departamentos según la zona seleccionada.
 @app.callback(
@@ -425,17 +525,16 @@ def update_dp(zona_seleccionada):
 def update_dp(deptodepto_options):
     return deptodepto_options[0]['value']
  
-
 # Actualiza el contenido del tabs vistas dependiendo de si se elige tabla o gráficos y dependiendo de si se eligió Lenguaje o Matemáticas.
 # Recibe como input el dropdown del departamento seleccionado y la tab activa de tabs comp. También recibe la tab activa de tabs vista.
 @app.callback(
-    Output('data-deptos','data'),
+    Output('data-depto','data'),
     Output('content-tabs-vistas-depto','children'),
     [Input(component_id='deptodepto', component_property='value'),
     Input('tabs-comp-depto','active_tab'),
     Input('tabs-vistas-depto','active_tab')]
  )
-def actualizar_info_deptos(deptodepto,tabsCompActiva,tabsVistasActiva):
+def actualizar_info_depto(deptodepto,tabsCompActiva,tabsVistasActiva):
 
     #Copia de los dataframes dependiendo de la competencia elegida.
     if tabsCompActiva == "tab-len-depto":
@@ -443,81 +542,34 @@ def actualizar_info_deptos(deptodepto,tabsCompActiva,tabsVistasActiva):
     elif tabsCompActiva == "tab-mat-depto":
         dffdeptos = deptosMat
 
-    # La tabla recibe en su atributo data un diccionario con las tuplas que se van a mostrar. Se ha creado una tupla con la información de todos los departamentos reunida, entonces se debe verificar si esa opción fue escogida.
-
     # Filtra según el departamento escogido
-    selDepto = dffdeptos[dffdeptos['DEPARTAMENTO']==deptodepto] 
+    seleccion = dffdeptos[dffdeptos['DEPARTAMENTO']==deptodepto] 
 
-    # Muestra todos los departamentos en la tabla
+    # Si se elige todos los departamentos, en la tabla se muestran todos los departamentos.
     if 'Todos los departamentos'==deptodepto:
         tablaData = dffdeptos
     else:
-        tablaData = selDepto
-    
-    # Contenedor de información general y tabla
-    contenedorTabla = html.Div([
-        html.H2(children=deptodepto),
-        html.Div([
-            html.Hr(),
-            html.P('Número de participantes: ' + str(*selDepto['N'].values)),
-            html.P('Puntaje promedio: ' + str(*selDepto['PUNTAJE_PROMEDIO'].values)),
-            html.P('Desviación: ' + str(*selDepto['DESVIACION'].values))
-        ]),
+        tablaData = seleccion
 
-        # Creación de la tabla con el dataframe de la competencia escogida.
-        dash_table.DataTable(
-            id = 'tabla-info',
-            data=tablaData.to_dict('records'),
-            columns=[{'name': i, 'id': i,"selectable": True} for i in tablaData.columns],
-            sort_action="native",
-            sort_mode="multi",
-            fixed_rows={'headers': True},
-            page_size=10, 
-            style_cell={
-                'minWidth': 250, 'maxWidth': 250, 'width': 250
-            },      
-        ),
-    ])
-       
-    # Se crea el div con el dropdown del tipo de gráfico y el gráfico como componente vacío.
-    contenedorGraficos =html.Div([
-        html.H2(id='', className='', children='Grafico'),
-
-        # Dropdown para elegir el tipo de gráfico
-        dcc.Dropdown(id='dropdown-graficos',
-            options=[
-                {'label':'Dona', 'value': 'Dona'},
-                {'label':'Barras', 'value': 'Barras'},
-                {'label':'Linea', 'value': 'Linea'}],
-            value='Dona',
-        ),
-        dcc.Graph(
-            id='grafico-seleccionado',
-            figure={},
-        )
-    ])
-    
-    #Se ajusta el dataframe para los gráficos. Posteriormente será enviado al callback del dropdown de tipo de gráficos a través de dcc.Store.
-    dffPorcentajes = selDepto.filter(like="PORCENTAJE").transpose()    
-    dffPorcentajes.reset_index(inplace = True)    
-    dffPorcentajes.rename(columns = {'index':'RENDIMIENTO'}, inplace = True)
-    dffPorcentajes.rename(columns={dffPorcentajes.columns[1]: 'PORCENTAJE'}, inplace = True)
-    dffPorcentajesDict = dffPorcentajes.to_dict('records')
-    
-    # Retorna el contenedor correspondiente a la tab seleccionada.
+    # Crea el contenedor que se va a enviar según la tab activa
     if tabsVistasActiva == 'tab-tabla-depto':
-        contenedorOutput = contenedorTabla
+        contenedorOutput = contenedorSegunTabActiva(deptodepto,seleccion,tablaData,'tab-tabla','grafico-depto')
     elif tabsVistasActiva == 'tab-grafico-depto':
-        contenedorOutput = contenedorGraficos
+        contenedorOutput = contenedorSegunTabActiva(deptodepto,seleccion,tablaData,'tab-grafico','grafico-depto')   
+
+    # Genera un dict que será enviado al callback de actualizar gráfico a través del Output de dcc.Store
+    dataGrafico = generarDataParaGrafico(seleccion)
     
-    return dffPorcentajesDict,contenedorOutput
+    return dataGrafico,contenedorOutput
           
 @app.callback(
-    Output('grafico-seleccionado','figure'),
+    Output('grafico-depto','figure'),
     [Input('dropdown-graficos','value'),
-    Input('data-deptos','data')]
+    Input('data-depto','data')]
 )
-def actualizar_graficos(tipoGrafico,dataDeptos):
+# Actualiza el gráfico de la Tab, dependiendo del tipo de gráfico que se haya seleccionado en el dropdown. Recibe el dict necesario para crear la figura a través del input del dcc.Store
+def actualizar_grafico_depto(tipoGrafico,dataDeptos):
+    # Se convierte el dict recibido en un DataFrame para cumplir el formato de la creación de gráficos.
     dffPorcentajes = pd.DataFrame.from_dict(dataDeptos)   
 
     if tipoGrafico == 'Barras':
@@ -525,7 +577,7 @@ def actualizar_graficos(tipoGrafico,dataDeptos):
             data_frame=dffPorcentajes,      
             x = 'RENDIMIENTO',
             y = 'PORCENTAJE',
-            color='RENDIMIENTO'
+            color='RENDIMIENTO' #Indica qué eje tendrá sus barras coloreadas.
         )
         # figure.update_layout(showlegend=False) #Esconder el label de X
         figure.update_xaxes(visible=False) #Esconder los valores de X
@@ -546,6 +598,79 @@ def actualizar_graficos(tipoGrafico,dataDeptos):
     
     return figure
 
+#---------------CALLBACKS EN ZONA---------------------------#
+# Actualiza el contenido del tabs vistas dependiendo de si se elige tabla o gráficos y dependiendo de si se eligió Lenguaje o Matemáticas.
+# Recibe como input el dropdown del departamento seleccionado y la tab activa de tabs comp. También recibe la tab activa de tabs vista.
+@app.callback(
+    Output('data-zona','data'),
+    Output('content-tabs-vistas-zona','children'),
+    [Input('zonaszonas', 'value'),
+    Input('tabs-comp-zona','active_tab'),
+    Input('tabs-vistas-zona','active_tab')]
+ )
+def actualizar_info_zona(zonaszonas,tabsCompActiva,tabsVistasActiva):
+
+    #Copia de los dataframes dependiendo de la competencia elegida.
+    if tabsCompActiva == "tab-len-zona":
+        dffdeptos = zonasLen
+    elif tabsCompActiva == "tab-mat-zona":
+        dffdeptos = zonasMat
+
+    # Filtra según el departamento escogido
+    seleccion = dffdeptos[dffdeptos['ZONA']==zonaszonas] 
+
+    # Si se elige todos los departamentos, en la tabla se muestran todos los departamentos.
+    if 'Todas las zonas'==zonaszonas:
+        tablaData = dffdeptos
+    else:
+        tablaData = seleccion
+    
+    # Crea el contenedor que se va a enviar según la tab activa
+    if tabsVistasActiva == 'tab-tabla-zona':
+        contenedorOutput = contenedorSegunTabActiva(zonaszonas,seleccion,tablaData,'tab-tabla','grafico-zona')
+    elif tabsVistasActiva == 'tab-grafico-zona':
+        contenedorOutput = contenedorSegunTabActiva(zonaszonas,seleccion,tablaData,'tab-grafico','grafico-zona')    
+
+    # Genera un dict que será enviado al callback de actualizar gráfico a través del Output de dcc.Store
+    dataGrafico = generarDataParaGrafico(seleccion)
+    
+    return dataGrafico,contenedorOutput
+          
+@app.callback(
+    Output('grafico-zona','figure'),
+    [Input('dropdown-graficos','value'),
+    Input('data-zona','data')]
+)
+# Actualiza el gráfico de la Tab, dependiendo del tipo de gráfico que se haya seleccionado en el dropdown. Recibe el dict necesario para crear la figura a través del input del dcc.Store
+def actualizar_grafico_zona(tipoGrafico,dataDeptos):
+    # Se convierte el dict recibido en un DataFrame para cumplir el formato de la creación de gráficos.
+    dffPorcentajes = pd.DataFrame.from_dict(dataDeptos)   
+
+    if tipoGrafico == 'Barras':
+        figure = px.bar(
+            data_frame=dffPorcentajes,      
+            x = 'RENDIMIENTO',
+            y = 'PORCENTAJE',
+            color='RENDIMIENTO' #Indica qué eje tendrá sus barras coloreadas.
+        )
+        # figure.update_layout(showlegend=False) #Esconder el label de X
+        figure.update_xaxes(visible=False) #Esconder los valores de X
+    
+    elif tipoGrafico == 'Dona':
+        figure = px.pie(
+            data_frame=dffPorcentajes,
+            names ='RENDIMIENTO',
+            values = 'PORCENTAJE',
+            hole=.3
+        )
+    else:
+        figure = px.line(
+            data_frame=dffPorcentajes,
+            x = 'RENDIMIENTO',
+            y = 'PORCENTAJE',
+        )
+    
+    return figure
 
 #---------------CALLBACKS EN ENTIDAD TERRITORIAL------------#
 #Actualiza los gráficos según el departamento seleccionado.
