@@ -10,56 +10,61 @@ import pandasql as ps
 import base64
 import io
 
-#Las siglas de los componentes se ponen dependiendo de 
-#la página a la que pertenecen, por ejemplo, si hay un 
-#dropdown en la página de departamento que sirva para
-#listar los municipios, entonces debería llamarse
-#deptoddmpios, donde depto es la página departamentos,
-#dd es la sigla de dropdown y mpios es el label del dropdown
-
+# Se utilizan elementos BOOSTRAP, pero al existir la carpeta assets con un archivo css, automáticamente el programa añade y sigue esa hoja de estilos en conjunto con los elementos de BOOSTRAP.
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
 
-#----------------LECTURA DE ARCHIVOS PLANOS----------------
-#-------Zonas---------------
+'''=================LECTURA DE ARCHIVOS PLANOS================='''
+
+'''--------------Zonas--------------'''
 # Lenguaje
 zonasLen = pd.read_csv('csv/Zonas/Lenguaje_Grado5_2017_Zonas.csv',sep='|',encoding='utf-8',header=0,decimal='.')
-#Matemáticas
+# Matemáticas
 zonasMat = pd.read_csv('csv/Zonas/Matematicas_Grado5_2017_Zonas.csv',sep='|',encoding='utf-8',header=0,decimal='.')
-
+# Tiene 'Todos los departamentos'. Se usa para generar los dropdowns en Departamentos.
 deptosZonas = pd.read_csv('csv/deptoszonas.csv',sep='|',encoding='utf-8',header=0,usecols=[1,10])
-#-------Departamentos-------
-#Lenguaje
+
+'''--------------Departamentos--------------'''
+# Lenguaje
 deptosLen = pd.read_csv('csv/Departamento/Lenguaje_Grado5_2017_Depto.csv',sep='|',encoding='utf-8',header=0)
-#Matemáticas
+# Matemáticas
 deptosMat = pd.read_csv('csv/Departamento/Matematicas_Grado5_2017_Depto.csv',sep='|',encoding='utf-8',header=0)
 
-#-------Entidades territoriales-------
+'''--------------Entidades territoriales--------------'''
+# Se utiliza para generar el dropdown de entidades territoriales.
 enterritorialesCSV = pd.read_csv('csv/entidadesterritoriales.csv',sep='|',encoding='utf-8',header=0,usecols=[0,1,2,3])
-#Lenguaje
+# Lenguaje
 entLen = pd.read_csv('csv/Entidad Territorial/Lenguaje_Grado5_2017_ETC.csv',sep='|',encoding='utf-8',header=0)
-#Matemáticas
+# Matemáticas
 entMat = pd.read_csv('csv/Entidad Territorial/Matematicas_Grado5_2017_ETC.csv',sep='|',encoding='utf-8',header=0)
 
-#-------Municipios-------
-#Lenguaje
+'''--------------Municipios--------------'''
+# Lenguaje
 mpioLen = pd.read_csv('csv/Municipios/Lenguaje_Grado5_2017_Municipio.csv',sep='|',encoding='utf-8',header=0)
-#Matemáticas
+# Matemáticas
 mpioMat = pd.read_csv('csv/Municipios/Matematicas_Grado5_2017_Municipio.csv',sep='|',encoding='utf-8',header=0)
 
-#-------Establecimientos--------
+'''--------------Establecimientos--------------'''
+# Se utiliza para generar el dropdown de Establecimientos.
 estInfo = pd.read_csv('csv/Establecimiento/Información_Complementaria_2017_EE.csv',sep='|',encoding='utf-8',header=0)
+# Lenguaje
 estLen = pd.read_csv('csv/Establecimiento/Lenguaje_Grado5_2017_EE_Completo.csv',sep='|',encoding='utf-8',header=0)
+# Matemáticas
 estMat = pd.read_csv('csv/Establecimiento/Matematicas_Grado5_2017_EE_Completo.csv',sep='|',encoding='utf-8',header=0)
 
-#--------Sede---------
+'''--------------Sede--------------'''
+# Se utiliza para generar los dropdown de Sede.
 sedeInfo = pd.read_csv('csv/Sede/Información_Complementaria_2017_Sede.csv',sep='|',encoding='utf-8',header=0)
+# Lenguaje
 sedeLen = pd.read_csv('csv/Sede/Lenguaje_Grado5_2017_Sede.csv',sep='|',encoding='utf-8',header=0)
+# Matemáticas
 sedeMat =pd.read_csv('csv/Sede/Matematicas_Grado5_2017_Sede.csv',sep='|',encoding='utf-8',header=0)
 
-#--------Valores Plausibles---------
+'''--------------Valores plausibles--------------'''
 valPlau = pd.read_csv('csv\Valores Plausibles\ValoresPlausibles_Grado5_2017.csv',sep='|',encoding='utf-8',header=0,nrows=1000)
 valPlauDict = valPlau.to_dict('records')
-#----------------VARIABLES PARA DROPDOWNS---------------------
+
+
+'''=================VARIABLES PARA DROPDOWNS================='''
 #Dp de competencias (global)
 compdropdowns=[
                 {'label':'Lenguaje', 'value': 'Lenguaje'},
@@ -73,9 +78,9 @@ zonasdropdown = [{'label': zonas['ZONA'][i], 'value': zonas['ZONA'][i]} for i in
 #Dp de departamentos en departamentos
 consultaSQL = """SELECT DISTINCT DEPARTAMENTO FROM deptosZonas """
 deptos = ps.sqldf(consultaSQL, locals())
-deptosdropdown = [{'label': deptos['DEPARTAMENTO'][i], 'value': deptos['DEPARTAMENTO'][i]} for i in deptos.index] #Forma para generar la lista de diccionarios para el dropdown de Dash
+deptosdropdown = [{'label': deptos['DEPARTAMENTO'][i], 'value': deptos['DEPARTAMENTO'][i]} for i in deptos.index]
 
-#Dp de zonas en zonas (es diferente porque este tiene todas las zonas, el anterior tiene todos los departamentos)
+#Dp de zonas en zonas (es diferente porque este tiene 'Todas las zonas', el anterior tiene 'Todos los departamentos')
 consultaSQL = """SELECT DISTINCT ZONA FROM zonasLen """
 zonaszonas = ps.sqldf(consultaSQL, locals())
 zonaszonasdropdown = [{'label': zonaszonas['ZONA'][i], 'value': zonaszonas['ZONA'][i]} for i in zonaszonas.index]
@@ -84,8 +89,13 @@ zonaszonasdropdown = [{'label': zonaszonas['ZONA'][i], 'value': zonaszonas['ZONA
 consultaSQL = """SELECT DISTINCT ENTIDAD FROM enterritorialesCSV """
 enterritoriales = ps.sqldf(consultaSQL, locals())
 entdropdown = [{'label': enterritoriales['ENTIDAD'][i], 'value': enterritoriales['ENTIDAD'][i]} for i in enterritoriales.index]
-
-#Dp de departamentos en Municipios
+#Dp de Tipo de entidades territoriales
+tipoentdropdown=[
+                {'label':'0', 'value': 'Departamento'},
+                {'label':'1', 'value': 'Etc'},
+                {'label':'2', 'value': 'Municipio'}]
+                
+#Dp de departamentos en Municipios (el dp de departamentos en municipios es el mismo que el de departamentos)
 mpioLenCopy = mpioLen[['DEPA_NOMBRE']]
 deptosdpenmpios = [{'label': mpioLenCopy['DEPA_NOMBRE'][i], 'value': mpioLenCopy['DEPA_NOMBRE'][i]} for i in mpioLenCopy.index]
 
@@ -105,14 +115,7 @@ sedesTotal = pd.merge(sedesTotal,estInfo[['COD_DANE','NOMBRE']],on='COD_DANE',ho
 sedesTotalCopyE = sedesTotal.drop_duplicates('COD_DANE')
 estdropdownsedes = [{'label': sedesTotalCopyE['NOMBRE_y'][i], 'value': sedesTotalCopyE['COD_DANE'][i]} for i in sedesTotalCopyE.index]
 
-#Dp de separadores
-separadores = [
-                {'label':'|', 'value': '|'},
-            ]
-global separador
-global dffPorcentajes
-# separador = "|"
-#------------DASHBOARD-----------------
+'''=================LAYOUT GENERAL================='''
 menu = html.Div(    
     [
         html.H2("Saber 5", className="display-4"),
@@ -121,8 +124,8 @@ menu = html.Div(
         ),
         dbc.Nav(
             [
-                #exact significa que active=True cuando el pathName sea igual a href
-                #href es la ruta que va a tener la página
+                #'exact' es igual a active=True -> Cuando el pathName sea igual a href.
+                #'href' es la ruta (url) que va a tener la página.
                 dbc.NavLink("Análisis", href="/",active="exact"),
                 dbc.NavLink("Departamento", href="/departamento",active="exact"),
                 dbc.NavLink("Zona", href="/zona",active="exact"),
@@ -142,57 +145,79 @@ menu = html.Div(
 
 content = html.Div(id="page-content", children=[],className="contenido-pestana")
 
+# Se crea el layout general con los componentes anteriomente creados.
 app.layout = html.Div([
     dcc.Location(id="url"),
     menu,
     content
 ])
 
+"""
+Recibe como Input la url de la página clickeada o activa.
+    Por ejemplo:
+    saber5dashboard.com/departamento, donde /departamento = pathname
+
+Retorna como Output el children que corresponde al contenido de cada pestaña.
+"""
 @app.callback(
     Output("page-content","children"),
     [Input("url","pathname")]
 )
-#pathname es la direccion de la página, relacionada a href,
-#por ejemplo, saber5dashboard.com/departamento, donde 
-#/departamento = pathname
+
 def update_contenido_pagina(pathname):
-    if pathname == "/":#Si no tiene pathname como tal, se muestra el inicio
+    """Actualiza el contenido de la pestaña activa, dependiendo de la url activa.
+
+    Args:
+        pathname ([str]): [Url de la página activa]
+
+    Returns:
+        [children]: [Contenido a mostrar por cada página]
+    """    
+    if pathname == "/": # Refiere al 'Home' o 'Inicio'.
+
+        header = html.H1(id='', className='', children='Análisis de datos')
+
+        inputSeparador = dcc.Input(
+            id='txfsep',
+            type = "text",
+            placeholder="Ingrese un separador...",                                   
+            size="22",            
+        )
+
+        upload = dcc.Upload(
+            id='upload-data',
+            children=html.Div([
+                'Arrastre el archivo o ',
+                html.A('Seleccione un archivo')
+            ]),
+            style={
+                'width': '100%',
+                'height': '60px',
+                'lineHeight': '60px',
+                'borderWidth': '1px',
+                'borderStyle': 'dashed',
+                'borderRadius': '5px',
+                'textAlign': 'center',
+                'margin': '10px'
+            },
+            multiple=True               
+        )
         return [
-                html.H1('Análisis de datos'),
-                html.P('Separador'),
-                dcc.Input(
-                    id='txfsep',
-                    type = "text",
-                    placeholder="Ingrese un separador...",                                   
-                    size="22",            
-                ),  
-                html.Hr(id='', className='', children=[]),             
-                html.H5(id='h4sep'),
-                dcc.Upload(
-                    id='upload-data',
-                    children=html.Div([
-                        'Arrastre el archivo o ',
-                        html.A('Seleccione un archivo')
-                    ]),
-                    style={
-                        'width': '100%',
-                        'height': '60px',
-                        'lineHeight': '60px',
-                        'borderWidth': '1px',
-                        'borderStyle': 'dashed',
-                        'borderRadius': '5px',
-                        'textAlign': 'center',
-                        'margin': '10px'
-                    },
-                    # Allow multiple files to be uploaded
-                    multiple=True               
-                ),                               
-                html.Div(id='output-data-upload'),
-                html.Div(id='info-atributo'),
+            header,
+            inputSeparador,
+            html.P('Separador'),                
+            html.Hr(), #Linea horizontal            
+            html.H5(id='h4sep'),
+
+            upload,                 
+            # Mostrará la tabla según el archivo subido.                         
+            html.Div(id='output-data-upload'),
+            # Mostrará la información del atributo escogido en la tabla.
+            html.Div(id='info-atributo'),
         ]
     elif pathname == "/departamento":
         
-        # Sirve para guardar los datos que se genera en el callback de creación de la tabla y usarlos en la creación de los gráficos.
+        # Guarda los datos que se generan en el callback de creación de la tabs.
         dataDeptos = dcc.Store(id='data-depto', storage_type='local')
 
         header =  html.Div(className='header', children=[
@@ -247,7 +272,7 @@ def update_contenido_pagina(pathname):
         
     elif pathname == "/zona":
 
-        # Sirve para guardar los datos que se genera en el callback de creación de la tabla y usarlos en la creación de los gráficos.
+        # Guarda los datos que se generan en el callback de creación de la tabs.
         dataZona = dcc.Store(id='data-zona', storage_type='local')
 
         header =  html.Div(className='header', children=[
@@ -417,7 +442,8 @@ def update_contenido_pagina(pathname):
                     virtualization=True
                 )               
         ]
-    #If the user tries to reach a different page, return a 404 message
+
+    # Si se intenta acceder a url que no existe, se muestra un mensaje de error.
     return dbc.Jumbotron(
         [
             html.H1("404: Not found", className="text-danger"),
@@ -427,12 +453,21 @@ def update_contenido_pagina(pathname):
     )
 
 
+'''=================FUNCIONES GENERALES================='''
 
-#------------------------FUNCIONES GENERALES----------------------------
-# Crea un contenedor con una tabla y su información general, o un contenedor con gráficos, dependiendo de la tab activa que reciba como parámetro.
 def contenedorSegunTabActiva(valueDropdown,seleccion,tablaData,tabsVistasActiva,idGrafico):
+    """[Crea un contenedor con una tabla y su información general o uno con gráficos, dependiendo de la tab activa que reciba como parámetro.]
 
-    # Retorna el contenedor correspondiente a la tab seleccionada.
+    Args:
+        valueDropdown ([str]): [Valor para mostrar como título en el panel de Tabla]
+        seleccion ([DataFrame]): [DataFrame con la información de valueDropdown]
+        tablaData ([DataFrame]): [DataFrame con la información a mostrar en la tabla]
+        tabsVistasActiva ([str]): [Nombre de la tab activa en el panel de Vistas]
+        idGrafico ([str]): [Nombre del gráfico a crearse]
+
+    Returns:
+        [html.Div]: [Contenedor a mostrarse en el panel de Vistas según la tab activa.]
+    """        
     if tabsVistasActiva == 'tab-tabla':
 
         # Se crea un div con la información general del dataset y una tabla mostrando su contenido.
@@ -481,11 +516,18 @@ def contenedorSegunTabActiva(valueDropdown,seleccion,tablaData,tabsVistasActiva,
             )
         ])
         
-        return contenedorGraficos
+        # Retorna el contenedor correspondiente a la tab seleccionada.
+        return contenedorGraficos    
 
-    
-#ajusta el DataFrame recibido para que el gráfico lo entienda. Posteriomente, dicho DataFrame se transforma en dict para cumplir el requerimiento de envío entre callbacks de dcc.Store.
 def generarDataParaGrafico(seleccion):
+    """[Ajusta un DataFrame y lo modifica para cumplir con el formato de la creación de un gráfico. Posteriomente, dicho DataFrame se transforma en un dict para poderse compartir entre callbacks con dcc.Store.]
+
+    Args:
+        seleccion ([DataFrame]): [DataFrame con la información a mostrarse en un gráfico]
+
+    Returns:
+        [dict]: [Diccionario formado a través del DataFrame listo para compartirse entre callbacks]
+    """    
     
     dffPorcentajes = seleccion.filter(like="PORCENTAJE").transpose()    
     dffPorcentajes.reset_index(inplace = True)    
@@ -495,26 +537,39 @@ def generarDataParaGrafico(seleccion):
 
     return dffPorcentajesDict
 
-#---------------CALLBACKS EN DEPARTAMENTOS------------#
-#Actualiza los departamentos según la zona seleccionada.
+'''=================CALLBACKS EN DEPARTAMENTOS================='''
 @app.callback(
     Output(component_id='deptodepto', component_property='options'),
     [Input(component_id='deptozonas', component_property='value')]
 )
-def update_dp(zona_seleccionada):
+def update_deptodepto(zona_seleccionada):
+    """Actualiza el dropdown de departamentos en 'Departamento' dependiendo de la zona seleccionada.
+
+    Args:
+        zona_seleccionada ([str]): [Valor elegido en el dropdown de zonas en 'Departamento']
+
+    Returns:
+        [list of dict]: [Departamentos de la zona seleccionada]
+    """    
     deptosZonasCopy = deptosZonas[deptosZonas['ZONA']==zona_seleccionada]
     deptosdropdown = [{'label': deptosZonasCopy['DEPARTAMENTO'][i], 'value': deptosZonasCopy['DEPARTAMENTO'][i]} for i in deptosZonasCopy.index]
     return deptosdropdown
     
-#Actualiza las opciones del dropdown de departamentos (en zonas).
 @app.callback(
-    dash.dependencies.Output('deptodepto', 'value'),
-    [dash.dependencies.Input('deptodepto', 'options')])
+    Output('deptodepto', 'value'),
+    [Input('deptodepto', 'options')]
+)
 def update_dp(deptodepto_options):
+    """Selecciona el primer Departamento en el dropdown de departamentos en 'Departamento' después de que este fuese actualizado.
+
+    Args:
+        deptodepto_options ([type]): [description]
+
+    Returns:
+        [str]: [Primer departamento del dropdown de departamentos en 'Departamento']
+    """    
     return deptodepto_options[0]['value']
  
-# Actualiza el contenido del tabs vistas dependiendo de si se elige tabla o gráficos y dependiendo de si se eligió Lenguaje o Matemáticas.
-# Recibe como input el dropdown del departamento seleccionado y la tab activa de tabs comp. También recibe la tab activa de tabs vista.
 @app.callback(
     Output('data-depto','data'),
     Output('content-tabs-vistas-depto','children'),
@@ -523,7 +578,17 @@ def update_dp(deptodepto_options):
     Input('tabs-vistas-depto','active_tab')]
  )
 def actualizar_info_depto(deptodepto,tabsCompActiva,tabsVistasActiva):
+    """Actualiza el contenido del tabs vistas dependiendo de si se elige tabla o gráficos y dependiendo de si se eligió Lenguaje o Matemáticas.
 
+    Args:
+        deptodepto ([str]): [Valor del dropdown de departamentos]
+        tabsCompActiva ([str]): [Id de la tab de competencias activa]
+        tabsVistasActiva ([str]): [Id del la tab de vistas activa]
+
+    Returns:
+        [dict]: [Diccionario con los datos del departamento seleccionado]
+        [htmldiv]: [Contenedor con el children de la tab activa]
+    """    
     #Copia de los dataframes dependiendo de la competencia elegida.
     if tabsCompActiva == "tab-len-depto":
         dffdeptos = deptosLen
@@ -549,14 +614,22 @@ def actualizar_info_depto(deptodepto,tabsCompActiva,tabsVistasActiva):
     dataGrafico = generarDataParaGrafico(seleccion)
     
     return dataGrafico,contenedorOutput
-          
+  
 @app.callback(
     Output('grafico-depto','figure'),
     [Input('dropdown-graficos','value'),
     Input('data-depto','data')]
 )
-# Actualiza el gráfico de la Tab, dependiendo del tipo de gráfico que se haya seleccionado en el dropdown. Recibe el dict necesario para crear la figura a través del input del dcc.Store
 def actualizar_grafico_depto(tipoGrafico,dataDeptos):
+    """Actualiza el gráfico de la Tab, dependiendo del tipo de gráfico que se haya seleccionado en el dropdown. Recibe el dict necesario para crear la figura a través del input del dcc.Store
+
+    Args:
+        tipoGrafico ([str]): [Valor del dropdown del tipo de gráfico]
+        dataDeptos ([dict]): [Diccionario con la información del departamento seleccionado]
+
+    Returns:
+        [htmldiv]: [Contenedor del gráfico a mostrar en la tab de gráfico]
+    """    
     # Se convierte el dict recibido en un DataFrame para cumplir el formato de la creación de gráficos.
     dffPorcentajes = pd.DataFrame.from_dict(dataDeptos)   
 
@@ -586,9 +659,8 @@ def actualizar_grafico_depto(tipoGrafico,dataDeptos):
     
     return figure
 
-#---------------CALLBACKS EN ZONA---------------------------#
-# Actualiza el contenido del tabs vistas dependiendo de si se elige tabla o gráficos y dependiendo de si se eligió Lenguaje o Matemáticas.
-# Recibe como input el dropdown del departamento seleccionado y la tab activa de tabs comp. También recibe la tab activa de tabs vista.
+'''=================CALLBACKS EN ZONA================='''
+
 @app.callback(
     Output('data-zona','data'),
     Output('content-tabs-vistas-zona','children'),
@@ -597,6 +669,17 @@ def actualizar_grafico_depto(tipoGrafico,dataDeptos):
     Input('tabs-vistas-zona','active_tab')]
  )
 def actualizar_info_zona(zonaszonas,tabsCompActiva,tabsVistasActiva):
+    """Actualiza el contenido del tabs vistas dependiendo de si se elige tabla o gráficos y dependiendo de si se eligió Lenguaje o Matemáticas.
+
+    Args:
+        zonaszonas ([str]): [Valor del dropdown de zonas en 'Zona']
+        tabsCompActiva ([str]): [Id de la tab de competencias activa]
+        tabsVistasActiva ([str]): [Id del la tab de vistas activa]
+
+    Returns:
+        [dict]: [Diccionario con los datos del departamento seleccionado]
+        [htmldiv]: [Contenedor con el children de la tab activa]
+    """    
 
     #Copia de los dataframes dependiendo de la competencia elegida.
     if tabsCompActiva == "tab-len-zona":
@@ -629,8 +712,16 @@ def actualizar_info_zona(zonaszonas,tabsCompActiva,tabsVistasActiva):
     [Input('dropdown-graficos','value'),
     Input('data-zona','data')]
 )
-# Actualiza el gráfico de la Tab, dependiendo del tipo de gráfico que se haya seleccionado en el dropdown. Recibe el dict necesario para crear la figura a través del input del dcc.Store
 def actualizar_grafico_zona(tipoGrafico,dataDeptos):
+    """Actualiza el gráfico de la Tab, dependiendo del tipo de gráfico que se haya seleccionado en el dropdown. Recibe el dict necesario para crear la figura a través del input del dcc.Store
+
+    Args:
+        tipoGrafico ([str]): [Valor del dropdown del tipo de gráfico]
+        dataDeptos ([type]): [Diccionario con la información de la zona seleccionada]
+
+    Returns:
+        [htmldiv]: [Contenedor del gráfico a mostrar en la tab de gráfico]
+    """    
     # Se convierte el dict recibido en un DataFrame para cumplir el formato de la creación de gráficos.
     dffPorcentajes = pd.DataFrame.from_dict(dataDeptos)   
 
@@ -641,7 +732,6 @@ def actualizar_grafico_zona(tipoGrafico,dataDeptos):
             y = 'PORCENTAJE',
             color='RENDIMIENTO' #Indica qué eje tendrá sus barras coloreadas.
         )
-        # figure.update_layout(showlegend=False) #Esconder el label de X
         figure.update_xaxes(visible=False) #Esconder los valores de X
     
     elif tipoGrafico == 'Dona':
@@ -660,7 +750,9 @@ def actualizar_grafico_zona(tipoGrafico,dataDeptos):
     
     return figure
 
-#---------------CALLBACKS EN ENTIDAD TERRITORIAL------------#
+
+
+'''=================CALLBACKS EN ENTIDAD TERRITORIAL================='''
 #Actualiza los gráficos según el departamento seleccionado.
 @app.callback(
     Output(component_id='h1Ent', component_property='children'),
