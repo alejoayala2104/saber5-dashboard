@@ -66,16 +66,8 @@ sedeLen = pd.read_csv('csv/Sede/Lenguaje_Grado5_2017_Sede.csv',sep='|',encoding=
 sedeMat =pd.read_csv('csv/Sede/Matematicas_Grado5_2017_Sede.csv',sep='|',encoding='utf-8',header=0)
 
 '''--------------Valores plausibles--------------'''
-# valPlau = pd.read_csv('csv/Valores Plausibles/ValoresPlausibles_Grado5_2017.csv',sep='|',encoding='utf-8',header=0,nrows=1000)
-# valPlauDict = valPlau.to_dict('records')
-
-valPlau = pd.read_csv('csv/Valores Plausibles/ValoresPlausibles_Grado5_2017.csv',sep='|',encoding='utf-8',header=0,nrows=10)
-# valPlau = pd.read_csv('C:/Users/Alejandro/Documents/ALEJO/UNIVERSIDAD/Monitoria GRIAS/Saber 5/copia antes de git/saber5-dashboard/csv/Valores Plausibles/ValoresPlausibles_Grado5_2017.csv',sep='|',encoding='utf-8',header=0,chunksize=10000)
-# valPlauDict = valPlau.to_dict('records')
-
-# for chunk in valPlau:
-#     dictChunk = chunk.to_dict('records')
-
+valPlau = pd.read_csv('csv/Valores Plausibles/ValoresPlausibles_Grado5_2017.csv',sep='|',encoding='utf-8',header=0,nrows=1000)
+valPlauDict = valPlau.to_dict('records')
 
 '''=================VARIABLES PARA DROPDOWNS================='''
 #Dp de competencias (global)
@@ -435,7 +427,7 @@ def update_contenido_pagina(pathname):
                         {"name": i, "id": i}
                         for i in valPlau.columns
                     ],
-                    data= dataValPlau,
+                    data= valPlauDict,
                     filter_action= "native",
                     sort_action="native",
                     sort_mode="multi",
