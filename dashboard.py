@@ -11,6 +11,7 @@ import pandas as pd
 import pandasql as ps
 import base64
 import io
+import csv
 
 from sqlalchemy import column
 
@@ -66,15 +67,19 @@ sedeLen = pd.read_csv('csv/Sede/Lenguaje_Grado5_2017_Sede.csv',sep='|',encoding=
 sedeMat =pd.read_csv('csv/Sede/Matematicas_Grado5_2017_Sede.csv',sep='|',encoding='utf-8',header=0)
 
 '''--------------Valores plausibles--------------'''
-valPlau = pd.read_csv('csv/Valores Plausibles/ValoresPlausibles_Grado5_2017.csv',sep='|',encoding='utf-8',header=0,nrows=1000)
-valPlauDict = valPlau.to_dict('records')
+valPlauColumnas = pd.read_csv('csv/Valores Plausibles/ValoresPlausibles_Grado5_2017_prueba.csv',sep='|',encoding='utf-8',header=0,nrows=100)
+# valPlauDict = valPlau.to_dict('records')
+
+# archivoValPlau = 'csv/Valores Plausibles/ValoresPlausibles_Grado5_2017.csv'
+# dataVlaPlau = []
+
+# with open(archivoValPlau, 'r') as data:      
+#     for line in csv.DictReader(data,delimiter="|"):
+#         dataVlaPlau.append(line)
+
+valPlauCompleto = pd.read_csv('csv/Valores Plausibles/ValoresPlausibles_Grado5_2017_prueba.csv',sep='|',encoding='utf-8',header=0,nrows=1000)
 
 '''=================VARIABLES PARA DROPDOWNS================='''
-#Dp de competencias (global)
-compdropdowns=[
-                {'label':'Lenguaje', 'value': 'Lenguaje'},
-                {'label':'Matemáticas', 'value': 'Matemáticas'}]
-
 #Dp de zonas en departamentos
 consultaSQL = """SELECT DISTINCT ZONA FROM deptosZonas """
 zonas = ps.sqldf(consultaSQL, locals())
@@ -417,27 +422,47 @@ def update_contenido_pagina(pathname):
             sedejrnadasDropdown,
             inicializarTabs('sede')
         ]
-    elif pathname == "/valplausibles":        
+    elif pathname == "/valplausibles":  
+
+        header =  html.Div(className='header', children=[
+            html.H1(children='Valores plausibles'),
+        ])
+        
+        estdeptoDropdown = dcc.Dropdown(
+            id='estdepto',
+            options=estDeptosDropdown,
+            value='Antioquia',
+            placeholder="Elija un departamento..."
+        )
+
+        estmpioDropdown = dcc.Dropdown(
+            id='estmpio',
+            placeholder="Elija un municipio..."
+        )
+
+        estDropdown = dcc.Dropdown(
+            id='sedeest',           
+            placeholder="Elija un establecimiento..."
+        )
+
+        sedesedeDropdown = dcc.Dropdown(
+            id='sedesede',            
+            placeholder="Elija un establecimiento..."
+        )
+
+        sedejrnadasDropdown = dcc.Dropdown(
+            id='sedejrnadas',            
+            placeholder="Elija una jornada..."
+        )
+
         return [
-                html.H1('Valores plausibles'),
-                html.Br(id='', className='', children=[]),
-                dash_table.DataTable(
-                    id='valplautable',
-                    columns= [
-                        {"name": i, "id": i}
-                        for i in valPlau.columns
-                    ],
-                    data= valPlauDict,
-                    filter_action= "native",
-                    sort_action="native",
-                    sort_mode="multi",
-                    page_size=10,
-                    style_data={
-                        'whitespace':'normal',
-                        'height': 'auto'
-                    },
-                    virtualization=True
-                )               
+            header,
+            estdeptoDropdown,
+            estmpioDropdown,
+            estDropdown,
+            sedesedeDropdown,
+            sedejrnadasDropdown,
+            html.Div(id='contenedor-valplau',children=[])
         ]
 
     # Si se intenta acceder a url que no existe, se muestra un mensaje de error.
@@ -607,51 +632,6 @@ def update_output(list_of_contents, list_of_names, list_of_sep):
             zip(list_of_contents, list_of_names, list_of_sep)]
         return children
 
-# #Selecciona el atributo de la tabla y muestra su info
-# @app.callback(Output('info-atributo','children'),             
-#               Input('datatable-main','selected_columns'))
-# def actualizar_info_atributo(selected_columns):
-#     copiadf= df
-#     nulos = ""
-#     moda = ""
-#     distintos = ""
-#     tipoDato = ""
-#     promedio = "No es valor numérico"
-#     mediana = "No es valor numérico"
-#     max = "No es valor numérico"
-#     min = "No es valor numérico"
-#     desviacion = "No es un valor numérico"
-#     if selected_columns:
-#         nulos =  copiadf[selected_columns[0]].isna().sum()
-#         modadf = copiadf[selected_columns[0]].mode() #Devuelve una Series
-#         if not modadf.empty: moda = modadf[0]
-#         distintos = copiadf[selected_columns[0]].nunique()
-#         tipoDato = copiadf[selected_columns[0]].dtypes        
-#         if tipoDato == numpy.int64 or tipoDato == numpy.float64:
-#             promedio = copiadf[selected_columns[0]].mean()
-#             mediana = copiadf[selected_columns[0]].median()
-#             max = copiadf[selected_columns[0]].max()
-#             min = copiadf[selected_columns[0]].min()
-#             desviacion = copiadf[selected_columns[0]].std()
-
-#     children = [ #Este es el html Div que se retorna a info-atributo       
-#         html.Div([
-#             html.H6(["Count: {}".format(len(str(copiadf.index)))]),
-#             html.H6(["Nulos: {}".format(str(nulos))]),
-#             html.H6(["Distintos: {}".format(str(distintos))]),
-#             html.H6(["Tipo de dato: {}".format(str(tipoDato))]),
-#             html.H6(["Moda: {}".format(str(moda))]),
-#             html.H6(["Promedio: {}".format(str(promedio))]),
-#             html.H6(["Mediana: {}".format(str(mediana))]),
-#             html.H6(["Máximo: {}".format(str(max))]),
-#             html.H6(["Mínimo: {}".format(str(min))]),
-#             html.H6(["Desviación: {}".format(str(desviacion))]),
-#         ]),
-                
-#     ]
-#     return children
-
-
 # Función para lectura de archivos    
 def parse_contents(contents, filename, sepr):
     content_type, content_string = contents.split(',')
@@ -682,11 +662,11 @@ def parse_contents(contents, filename, sepr):
         page_size= 10,
         style_data={
             'whitespace':'normal',
-        },            
-        virtualization=True
+        },           
+        style_table={'overflowY': 'auto', 'overflowX': 'auto'}, 
+        # virtualization=True
     )   
     analisisAtributo = generarAnalisisAtributos(df)
-
 
     return html.Div([
         tablaArchivo,
@@ -1542,21 +1522,25 @@ def actualizar_jornadas(sedesede_value):
     [Input('sedeest','options')]
 )
 def update_dp(sedeest_options):
-    return sedeest_options[0]['value']
+    if sedeest_options != []:
+        return sedeest_options[0]['value']
+    
 
 @app.callback(
     Output('sedesede','value'),
     [Input('sedesede','options')]
 )
 def update_dp(sedesede_options):
-    return sedesede_options[0]['value']
+    if sedesede_options != []:
+        return sedesede_options[0]['value']
 
 @app.callback(
     Output('sedejrnadas','value'),
     [Input('sedejrnadas','options')]
 )
 def update_dp(sedejrnadas_options):
-    return sedejrnadas_options[0]['value']
+    if sedejrnadas_options != []:    
+        return sedejrnadas_options[0]['value']
     
 
 @app.callback(
@@ -1697,6 +1681,38 @@ def actualizar_grafico_est(tipoGrafico,dataEst):
         )
     
     return figure
+
+
+@app.callback(
+    Output('contenedor-valplau','children'),
+    [Input('sedejrnadas', 'value')]
+)
+def generarTablaValPlau(jrnada_seleccionada):
+
+    seleccion = valPlauCompleto[valPlauCompleto['JORNADA']==jrnada_seleccionada]
+
+    if seleccion.empty:
+        return {},html.Div(['No se registran datos para este establecimiento'])
+
+    tablaValPlau = dash_table.DataTable(
+        id='valplautable',
+        columns= [
+            {"name": i, "id": i}
+            for i in valPlauColumnas.columns
+        ],
+        data= seleccion.to_dict('records'),
+        filter_action= "native",
+        sort_action="native",
+        sort_mode="multi",
+        page_size=20,
+        style_data={
+            'whitespace':'normal',
+        },
+        style_table={'overflowY': 'auto', 'overflowX': 'auto'},
+        virtualization=True
+    )
+    return [tablaValPlau]
+
 
 
 if __name__=='__main__':        
