@@ -1,3 +1,4 @@
+from turtle import color
 from unicodedata import decimal
 import dash
 import dash_bootstrap_components as dbc
@@ -10,6 +11,8 @@ import pandas as pd
 import pandasql as ps
 import base64
 import io
+
+from sqlalchemy import column
 
 # Se utilizan elementos BOOSTRAP, pero al existir la carpeta assets con un archivo css, automáticamente el programa añade y sigue esa hoja de estilos en conjunto con los elementos de BOOSTRAP.
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
@@ -63,8 +66,15 @@ sedeLen = pd.read_csv('csv/Sede/Lenguaje_Grado5_2017_Sede.csv',sep='|',encoding=
 sedeMat =pd.read_csv('csv/Sede/Matematicas_Grado5_2017_Sede.csv',sep='|',encoding='utf-8',header=0)
 
 '''--------------Valores plausibles--------------'''
-valPlau = pd.read_csv('csv\Valores Plausibles\ValoresPlausibles_Grado5_2017.csv',sep='|',encoding='utf-8',header=0,nrows=1000)
-valPlauDict = valPlau.to_dict('records')
+# valPlau = pd.read_csv('csv/Valores Plausibles/ValoresPlausibles_Grado5_2017.csv',sep='|',encoding='utf-8',header=0,nrows=1000)
+# valPlauDict = valPlau.to_dict('records')
+
+valPlau = pd.read_csv('csv/Valores Plausibles/ValoresPlausibles_Grado5_2017.csv',sep='|',encoding='utf-8',header=0,nrows=10)
+# valPlau = pd.read_csv('C:/Users/Alejandro/Documents/ALEJO/UNIVERSIDAD/Monitoria GRIAS/Saber 5/copia antes de git/saber5-dashboard/csv/Valores Plausibles/ValoresPlausibles_Grado5_2017.csv',sep='|',encoding='utf-8',header=0,chunksize=10000)
+# valPlauDict = valPlau.to_dict('records')
+
+# for chunk in valPlau:
+#     dictChunk = chunk.to_dict('records')
 
 
 '''=================VARIABLES PARA DROPDOWNS================='''
@@ -189,13 +199,17 @@ def update_contenido_pagina(pathname):
 
         header = html.H1(id='', className='', children='Análisis de datos')
 
-        inputSeparador = dcc.Input(
-            id='txfsep',
-            type = "text",
-            placeholder="Ingrese un separador...",                                   
-            size="22",            
+        inputSeparador = html.Div(
+            [
+                dbc.Label("Separador"),
+                dbc.Input(
+                    id='txfsep',
+                    placeholder="Por defecto es '|'",
+                    type="text",
+                    size=22
+                )
+            ]
         )
-
         upload = dcc.Upload(
             id='upload-data',
             children=html.Div([
@@ -214,18 +228,15 @@ def update_contenido_pagina(pathname):
             },
             multiple=True               
         )
+
         return [
             header,
             inputSeparador,
-            html.P('Separador'),                
-            html.Hr(), #Linea horizontal            
-            html.H5(id='h4sep'),
-
             upload,                 
             # Mostrará la tabla según el archivo subido.                         
             html.Div(id='output-data-upload'),
             # Mostrará la información del atributo escogido en la tabla.
-            html.Div(id='info-atributo'),
+            html.Div(id='info-atributo')
         ]
     elif pathname == "/departamento":
         
@@ -414,7 +425,7 @@ def update_contenido_pagina(pathname):
             sedejrnadasDropdown,
             inicializarTabs('sede')
         ]
-    elif pathname == "/valplausibles":
+    elif pathname == "/valplausibles":        
         return [
                 html.H1('Valores plausibles'),
                 html.Br(id='', className='', children=[]),
@@ -424,7 +435,7 @@ def update_contenido_pagina(pathname):
                         {"name": i, "id": i}
                         for i in valPlau.columns
                     ],
-                    data= valPlauDict,
+                    data= dataValPlau,
                     filter_action= "native",
                     sort_action="native",
                     sort_mode="multi",
@@ -581,12 +592,21 @@ def generarDataParaGrafico(seleccion):
 
 
 '''=================CALLBACKS EN ANÁLISIS================='''
-#Actualiza el div de la tabla.
 @app.callback(Output('output-data-upload', 'children'),
               Input('upload-data', 'contents'),
               State('upload-data', 'filename'),
-              Input('txfsep', 'value'),)
+              Input('txfsep', 'value'))
 def update_output(list_of_contents, list_of_names, list_of_sep):
+    """Actualiza el contenido del contenedor según el archivo o archivos subidos en el elemento Upload.
+
+    Args:
+        list_of_contents (list): Contenido del archivo o archivos subidos
+        list_of_names (list): Nombre del archivo o archivos subidos
+        list_of_sep (list): Separador o separadores configurados
+
+    Returns:
+        children: Elemento html que cambia según el archivo cargado en el upload
+    """    
     if not list_of_sep:
         list_of_sep = "|"
     if list_of_contents is not None:
@@ -595,49 +615,49 @@ def update_output(list_of_contents, list_of_names, list_of_sep):
             zip(list_of_contents, list_of_names, list_of_sep)]
         return children
 
-#Selecciona el atributo de la tabla y muestra su info
-@app.callback(Output('info-atributo','children'),             
-              Input('datatable-main','selected_columns'))
-def actualizar_info_atributo(selected_columns):
-    copiadf= df
-    nulos = ""
-    moda = ""
-    distintos = ""
-    tipoDato = ""
-    promedio = "No es valor numérico"
-    mediana = "No es valor numérico"
-    max = "No es valor numérico"
-    min = "No es valor numérico"
-    desviacion = "No es un valor numérico"
-    if selected_columns:
-        nulos =  copiadf[selected_columns[0]].isna().sum()
-        modadf = copiadf[selected_columns[0]].mode() #Devuelve una Series
-        if not modadf.empty: moda = modadf[0]
-        distintos = copiadf[selected_columns[0]].nunique()
-        tipoDato = copiadf[selected_columns[0]].dtypes        
-        if tipoDato == numpy.int64 or tipoDato == numpy.float64:
-            promedio = copiadf[selected_columns[0]].mean()
-            mediana = copiadf[selected_columns[0]].median()
-            max = copiadf[selected_columns[0]].max()
-            min = copiadf[selected_columns[0]].min()
-            desviacion = copiadf[selected_columns[0]].std()
+# #Selecciona el atributo de la tabla y muestra su info
+# @app.callback(Output('info-atributo','children'),             
+#               Input('datatable-main','selected_columns'))
+# def actualizar_info_atributo(selected_columns):
+#     copiadf= df
+#     nulos = ""
+#     moda = ""
+#     distintos = ""
+#     tipoDato = ""
+#     promedio = "No es valor numérico"
+#     mediana = "No es valor numérico"
+#     max = "No es valor numérico"
+#     min = "No es valor numérico"
+#     desviacion = "No es un valor numérico"
+#     if selected_columns:
+#         nulos =  copiadf[selected_columns[0]].isna().sum()
+#         modadf = copiadf[selected_columns[0]].mode() #Devuelve una Series
+#         if not modadf.empty: moda = modadf[0]
+#         distintos = copiadf[selected_columns[0]].nunique()
+#         tipoDato = copiadf[selected_columns[0]].dtypes        
+#         if tipoDato == numpy.int64 or tipoDato == numpy.float64:
+#             promedio = copiadf[selected_columns[0]].mean()
+#             mediana = copiadf[selected_columns[0]].median()
+#             max = copiadf[selected_columns[0]].max()
+#             min = copiadf[selected_columns[0]].min()
+#             desviacion = copiadf[selected_columns[0]].std()
 
-    children = [ #Este es el html Div que se retorna a info-atributo       
-        html.Div([
-            html.H6(["Count: {}".format(len(str(copiadf.index)))]),
-            html.H6(["Nulos: {}".format(str(nulos))]),
-            html.H6(["Distintos: {}".format(str(distintos))]),
-            html.H6(["Tipo de dato: {}".format(str(tipoDato))]),
-            html.H6(["Moda: {}".format(str(moda))]),
-            html.H6(["Promedio: {}".format(str(promedio))]),
-            html.H6(["Mediana: {}".format(str(mediana))]),
-            html.H6(["Máximo: {}".format(str(max))]),
-            html.H6(["Mínimo: {}".format(str(min))]),
-            html.H6(["Desviación: {}".format(str(desviacion))]),
-        ]),
+#     children = [ #Este es el html Div que se retorna a info-atributo       
+#         html.Div([
+#             html.H6(["Count: {}".format(len(str(copiadf.index)))]),
+#             html.H6(["Nulos: {}".format(str(nulos))]),
+#             html.H6(["Distintos: {}".format(str(distintos))]),
+#             html.H6(["Tipo de dato: {}".format(str(tipoDato))]),
+#             html.H6(["Moda: {}".format(str(moda))]),
+#             html.H6(["Promedio: {}".format(str(promedio))]),
+#             html.H6(["Mediana: {}".format(str(mediana))]),
+#             html.H6(["Máximo: {}".format(str(max))]),
+#             html.H6(["Mínimo: {}".format(str(min))]),
+#             html.H6(["Desviación: {}".format(str(desviacion))]),
+#         ]),
                 
-    ]
-    return children
+#     ]
+#     return children
 
 
 # Función para lectura de archivos    
@@ -657,17 +677,105 @@ def parse_contents(contents, filename, sepr):
     except Exception as e:
         print(e)
         return html.Div([
-            'No se pudo cargar el archivo.'
+            'No se pudo cargar el archivo. Revisar separador'
         ])
 
-    return html.Div([        
-        dash_table.DataTable(
-            id = 'datatable-main',
-            data=df.to_dict('records'),
-            columns=[{'name': i, 'id': i,"selectable": True} for i in df.columns],
-            column_selectable="single",           
-            selected_columns=[],
-            filter_action= "native",
+    tablaArchivo = dash_table.DataTable(
+        id = 'datatable-main',
+        data=df.to_dict('records'),
+        columns=[{'name': i, 'id': i,"selectable": True} for i in df.columns],        
+        sort_action="native",
+        sort_mode="multi",
+        page_current= 0,
+        page_size= 10,
+        style_data={
+            'whitespace':'normal',
+        },            
+        virtualization=True
+    )   
+    analisisAtributo = generarAnalisisAtributos(df)
+
+
+    return html.Div([
+        tablaArchivo,
+        html.H2('Análisis'),
+        analisisAtributo,
+    ])
+
+
+def generarAnalisisAtributos(df):
+    """Genera una tabla de análisis de los atributos de un dataframe.
+
+    Args:
+        df (DataFrame): Dataframe a analizar
+
+    Returns:
+        dash.DataTable: Tabla con el análisis de los atributos
+    """    
+
+    columnas = [
+            {"name":"ATRIBUTO","id":"ATRIBUTO"},
+            {"name":"DISTINTOS","id":"DISTINTOS"},
+            {"name":"COUNT","id":"COUNT"},
+            {"name":"NULOS","id":"NULOS"},
+            {"name":"MODA","id":"MODA"},
+            {"name":"TIPO","id":"TIPO"},
+            {"name":"PROMEDIO","id":"PROMEDIO"},
+            {"name":"MEDIANA","id":"MEDIANA"},
+            {"name":"MAXIMO","id":"MAXIMO"},
+            {"name":"MINIMO","id":"MINIMO"},
+            {"name":"DESVIACION","id":"DESVIACION"}
+        ]
+    atributos = []   
+    for (columnName, columnData) in df.iteritems():
+        nulos = columnData.isnull().sum()
+        moda = columnData.mode(dropna=True)
+        distintos = columnData.nunique()
+        
+        if moda.empty: #Si no hay moda, significa que todos sus valores son Nulos.
+            moda = "-"
+        else:
+            moda = moda[0]
+
+        promedio = "-"
+        mediana = "-"
+        maximo = "-"
+        minimo = "-"
+        desviacion = "-"
+               
+        #Info para valores numéricos
+        tipoDato = columnData.dtypes
+        if tipoDato == numpy.int64 or tipoDato == numpy.float64:
+
+            if columnData.count() != 0: #Verificar que al menos tenga 1 valor 
+                promedio = round(columnData.mean(),2)
+                mediana = round(columnData.median(),2)
+                maximo = round(columnData.max(),2)
+                minimo = round(columnData.min(),2)
+                desviacion = round(columnData.std(),2)       
+        
+        rowAtributo = {
+            "ATRIBUTO":columnName,
+            "DISTINTOS":distintos,
+            "COUNT":columnData.count(),
+            "NULOS":nulos,
+            "MODA":moda,
+            "TIPO":str(columnData.dtype),
+
+            "PROMEDIO": promedio,
+            "MEDIANA": mediana,
+            "MAXIMO": maximo,
+            "MINIMO": minimo,
+            "DESVIACION": desviacion
+        }
+        atributos.append(rowAtributo)
+  
+    tablaAtributo = dash_table.DataTable(
+            id = 'datatable-atributo',
+            data=atributos,
+            columns=columnas,
+            row_selectable="single",   
+            selected_rows=[0],
             sort_action="native",
             sort_mode="multi",
             page_current= 0,
@@ -676,24 +784,46 @@ def parse_contents(contents, filename, sepr):
                 'whitespace':'normal',
             },            
             virtualization=True
-        ),
-  
-        html.Hr(),
+        )
+    
+    return html.Div([
+        tablaAtributo,
+        html.Br(),
+        html.P('Seleccione un atributo en la tabla de análisis. Solo es válido para atributos hasta con 10 valores únicos.'),
+        dcc.Graph(id='grafico-atributo'),
     ])
 
-#Actualiza el separador
 @app.callback(
-    Output('h4sep', 'children'),
-    [Input('txfsep', 'value')]
+    Output('grafico-atributo','figure'),
+    [Input('datatable-atributo','selected_rows'),
+    Input('datatable-atributo','data')]
 )
-def update_sep(txfsep):
-    if not txfsep:
-        separador = "'|'"       
-    else:
-        separador = str(txfsep)
+def actualizarGraficoAtributo(lista_atributos_selected,dataTablaAtributo):
 
-    return html.H6(id='', className='', children='Separador = ' + separador)
+    # Se apunta al atributo seleccionado en la primera posición de la lista de atributos seleccionados, y después se filtra el dataframe del archivo subido con dicho atributo seleccionado.
+    dictAtributoSelected = dataTablaAtributo[lista_atributos_selected[0]]    
+    # atributoSeleccionado refiere a la columna del dataframe grande del archivo subido
+    atributoSeleccionado = df[dictAtributoSelected['ATRIBUTO']]
+    
+    # Muestra los valores unicos con su respectivo count
+    dffAtributoGrafico = atributoSeleccionado.value_counts()
 
+    dffAtributoGrafico = dffAtributoGrafico.to_frame()
+    dffAtributoGrafico.reset_index(inplace = True) 
+    dffAtributoGrafico.rename(columns = {'index':'VALOR'}, inplace = True)
+    dffAtributoGrafico.rename(columns={dffAtributoGrafico.columns[1]: 'COUNT'}, inplace = True)
+
+    figure = px.bar()
+    # Se limita a graficar hasta 10 valores distintos
+    if atributoSeleccionado.nunique() <= 10:        
+        figure = px.bar(
+            data_frame=dffAtributoGrafico,
+            x = "VALOR",
+            y = "COUNT",
+            title=atributoSeleccionado.name
+        )
+
+    return figure   
 
 '''=================CALLBACKS EN DEPARTAMENTOS================='''
 @app.callback(
@@ -731,7 +861,7 @@ def update_dp(deptodepto_options):
 @app.callback(
     Output('data-depto','data'),
     Output('content-tabs-vistas-depto','children'),
-    [Input(component_id='deptodepto', component_property='value'),
+    [Input('deptodepto', 'value'),
     Input('tabs-comp-depto','active_tab'),
     Input('tabs-vistas-depto','active_tab')]
  )
@@ -1578,5 +1708,8 @@ def actualizar_grafico_est(tipoGrafico,dataEst):
 
 
 if __name__=='__main__':        
-    app.config.suppress_callback_exceptions = True
-    app.run_server(debug=True, port=3000)
+    # app.config.suppress_callback_exceptions = True
+    app.enable_dev_tools(
+        dev_tools_prune_errors=False
+    )
+    app.run_server(debug=False,port=3000)
