@@ -77,7 +77,7 @@ valPlauColumnas = pd.read_csv('csv/Valores Plausibles/ValoresPlausibles_Grado5_2
 #     for line in csv.DictReader(data,delimiter="|"):
 #         dataVlaPlau.append(line)
 
-valPlauCompleto = pd.read_csv('csv/Valores Plausibles/ValoresPlausibles_Grado5_2017_prueba.csv',sep='|',encoding='utf-8',header=0,nrows=1000)
+valPlauCompleto = pd.read_csv('csv/Valores Plausibles/ValoresPlausibles_Grado5_2017_prueba.csv',sep='|',encoding='utf-8',header=0)
 
 '''=================VARIABLES PARA DROPDOWNS================='''
 #Dp de zonas en departamentos
@@ -132,7 +132,6 @@ sedesTotalCopyE = sedesTotal.drop_duplicates('COD_DANE')
 #Se mezclan los csv de: sedeLen(tiene id sede), sedeInfo(tiene nombre), estInfo(tiene Mun id)
 sedesJoin = pd.merge(sedeLen,sedeInfo[['ID_SEDE','COD_DANE','NOMBRE']],on='ID_SEDE',how='left')
 sedesCompleto = pd.merge(sedesJoin,estInfo[['COD_DANE','MUNI_ID','NOMBRE']],on='COD_DANE',how='left')
-
 
 '''=================LAYOUT GENERAL================='''
 menu = html.Div(    
@@ -398,7 +397,7 @@ def update_contenido_pagina(pathname):
         )
 
         estDropdown = dcc.Dropdown(
-            id='sedeest',           
+            id='estestablmtos',           
             placeholder="Elija un establecimiento..."
         )
 
@@ -441,7 +440,7 @@ def update_contenido_pagina(pathname):
         )
 
         estDropdown = dcc.Dropdown(
-            id='sedeest',           
+            id='estestablmtos',           
             placeholder="Elija un establecimiento..."
         )
 
@@ -1467,25 +1466,25 @@ def actualizar_grafico_est(tipoGrafico,dataEst):
 
 
 '''=================CALLBACKS EN SEDE================='''
-@app.callback(
-    Output('sedeest','options'),
-    [Input('estmpio','value')]
-)
-def actualizar_establecimientos(estmpio_value):
+# @app.callback(
+#     Output('estestablmtos','options'),
+#     [Input('estmpio','value')]
+# )
+# def actualizar_establecimientos(estmpio_value):
 
-    # Se filtra por el municipio seleccionado y después se elimina los duplicados porque sino saldrían todas las sedes. Se hace drop duplicates en COD_DANE porque es el indicador único de un establecimiento.
-    sedesCompletoCopy = sedesCompleto[sedesCompleto['MUNI_ID']==estmpio_value].drop_duplicates('COD_DANE')
+#     # Se filtra por el municipio seleccionado y después se elimina los duplicados porque sino saldrían todas las sedes. Se hace drop duplicates en COD_DANE porque es el indicador único de un establecimiento.
+#     sedesCompletoCopy = sedesCompleto[sedesCompleto['MUNI_ID']==estmpio_value].drop_duplicates('COD_DANE')
 
-    # NOMBRE_y es el nombre del establecimiento
-    sedeestDropdown = [{'label': sedesCompletoCopy['NOMBRE_y'][i], 'value': sedesCompletoCopy['COD_DANE'][i]} for i in sedesCompletoCopy.index]
+#     # NOMBRE_y es el nombre del establecimiento
+#     sedeestDropdown = [{'label': sedesCompletoCopy['NOMBRE_y'][i], 'value': sedesCompletoCopy['COD_DANE'][i]} for i in sedesCompletoCopy.index]
 
-    return sedeestDropdown
+#     return sedeestDropdown
 
 
 #Actualiza el dropdown de sede según el establecimiento seleccionado.
 @app.callback(
     Output('sedesede', 'options'),
-    [Input('sedeest', 'value')]
+    [Input('estestablmtos', 'value')]
 )
 def actualizar_sede(sedeest_value):
 
@@ -1517,13 +1516,13 @@ def actualizar_jornadas(sedesede_value):
     
     return jrnadadropdown    
 
-@app.callback(
-    Output('sedeest','value'),
-    [Input('sedeest','options')]
-)
-def update_dp(sedeest_options):
-    if sedeest_options != []:
-        return sedeest_options[0]['value']
+# @app.callback(
+#     Output('sedeest','value'),
+#     [Input('sedeest','options')]
+# )
+# def update_dp(sedeest_options):
+#     if sedeest_options != []:
+#         return sedeest_options[0]['value']
     
 
 @app.callback(
