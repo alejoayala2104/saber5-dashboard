@@ -1,19 +1,13 @@
-from turtle import color
-from unicodedata import decimal
 import dash
 import dash_bootstrap_components as dbc
 from dash import html,dcc,dash_table
 import numpy
-from pandas.core.frame import DataFrame
 import plotly.express as px
 from dash.dependencies import Input, Output, State
 import pandas as pd
 import pandasql as ps
 import base64
 import io
-import csv
-
-from sqlalchemy import column
 
 # Se utilizan elementos BOOSTRAP, pero al existir la carpeta assets con un archivo css, automáticamente el programa añade y sigue esa hoja de estilos en conjunto con los elementos de BOOSTRAP.
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
@@ -77,7 +71,7 @@ valPlauColumnas = pd.read_csv('csv/Valores Plausibles/ValoresPlausibles_Grado5_2
 #     for line in csv.DictReader(data,delimiter="|"):
 #         dataVlaPlau.append(line)
 
-valPlauCompleto = pd.read_csv('csv/Valores Plausibles/ValoresPlausibles_Grado5_2017_prueba.csv',sep='|',encoding='utf-8',header=0)
+valPlauCompleto = pd.read_csv('csv/Valores Plausibles/ValoresPlausibles_Grado5_2017.csv',sep='|',encoding='utf-8',header=0)
 
 '''=================VARIABLES PARA DROPDOWNS================='''
 #Dp de zonas en departamentos
@@ -192,8 +186,9 @@ def update_contenido_pagina(pathname):
         [children]: [Contenido a mostrar por cada página]
     """    
     if pathname == "/": # Refiere al 'Home' o 'Inicio'.
-
-        header = html.H1(id='', className='', children='Análisis de datos')
+        header =  html.Div(className='header', children=[
+            html.H1(children='Análisis de datos'),
+        ])
 
         inputSeparador = html.Div(
             [
@@ -243,23 +238,45 @@ def update_contenido_pagina(pathname):
             html.H1(children='Departamento'),
         ])
 
-        deptoZonasDropdown = dcc.Dropdown(
-            id='deptozonas',
-            options=zonasdropdown,
-            value='Todos los departamentos',
-            placeholder="Elija una zona..."
+        deptoZonasDropdown = html.Div(
+            children=[
+                dbc.Label("Zona"),
+                dcc.Dropdown(
+                    id='deptozonas',
+                    options=zonasdropdown,
+                    value='Todos los departamentos',
+                    placeholder="Elija una zona..."
+                )
+            ]
         )
 
-        deptoDeptoDropdown = dcc.Dropdown(
-            id='deptodepto',
-            placeholder="Elija un departamento..."
+        deptoDeptoDropdown = html.Div(
+            children=[
+                dbc.Label("Departamento"),
+                dcc.Dropdown(
+                    id='deptodepto',
+                    placeholder="Elija un departamento..."
+                )
+            ]
         )
+
+        formDeptos = dbc.Form(
+            children=[
+                dbc.Row(
+                    children=[
+                        dbc.Col(children=[deptoZonasDropdown],width=6),
+
+                        dbc.Col(children=[deptoDeptoDropdown],width=6)
+                    ],                    
+                )   
+            ],
+            class_name='form-dropdowns'
+        )    
 
         return html.Div([
             dataDeptos,
             header,
-            deptoZonasDropdown,
-            deptoDeptoDropdown,
+            formDeptos,
             inicializarTabs('depto')
         ])        
     elif pathname == "/zona":
@@ -271,17 +288,33 @@ def update_contenido_pagina(pathname):
             html.H1(children='Zona'),
         ])
 
-        zonasZonasDropdown = dcc.Dropdown(
-            id='zonaszonas',
-            options=zonaszonasdropdown,
-            value='Todas las zonas',
-            placeholder="Elija una zona..."
+        zonasZonasDropdown = html.Div(
+            children=[
+                dbc.Label("Zona"),
+                dcc.Dropdown(
+                    id='zonaszonas',
+                    options=zonaszonasdropdown,
+                    value='Todas las zonas',
+                    placeholder="Elija una zona..."
+                )
+            ]
         )
+
+        formZonas = dbc.Form(
+            children=[
+                dbc.Row(
+                    children=[
+                        dbc.Col(children=[zonasZonasDropdown],width=12)
+                    ]
+                ),
+            ],
+            class_name='form-dropdowns'
+        )  
 
         return [
             dataZona,
             header,
-            zonasZonasDropdown, 
+            formZonas, 
             inicializarTabs('zona')
         ]
     elif pathname == "/entidadter":
@@ -292,26 +325,48 @@ def update_contenido_pagina(pathname):
         header =  html.Div(className='header', children=[
             html.H1(children='Entidad territorial'),
         ])
+   
+        entDropdown = html.Div(
+            children=[
+                dbc.Label("Entidad territorial"),
+                dcc.Dropdown(
+                    id='entdropdown',
+                    options=entdropdown,
+                    value='Todas las entidades territoriales',
+                    placeholder="Elija una entidad territorial..."
+                )
+            ]
+        ) 
 
-        tipoentDropdown =dcc.Dropdown(
-            id='tipoentdropdown',
-            options=tipoentdropdown,
-            value='-1',
-            placeholder="Elija una el tipo de entidad territorial..."
-        )
+        tipoentDropdown = html.Div(
+            children=[
+                dbc.Label("Tipo de entidad territorial"),
+                dcc.Dropdown(
+                    id='tipoentdropdown',
+                    options=tipoentdropdown,
+                    value='-1',
+                    placeholder="Elija una el tipo de entidad territorial..."
+                )
+            ]
+        )        
+        
+        formEnt = dbc.Form(
+            children=[
+                dbc.Row(
+                    children=[
+                        dbc.Col(children=[tipoentDropdown],width=6),
 
-        entDropdown = dcc.Dropdown(
-            id='entdropdown',
-            options=entdropdown,
-            value='Todas las entidades territoriales',
-            placeholder="Elija una entidad territorial..."
-        )
+                        dbc.Col(children=[entDropdown],width=6)
+                    ],                    
+                )   
+            ],
+            class_name='form-dropdowns'
+        )  
 
         return [
             dataEnt,
             header,
-            tipoentDropdown,
-            entDropdown,            
+            formEnt,            
             inicializarTabs('ent')
         ]
     elif pathname == "/municipio":
@@ -323,23 +378,45 @@ def update_contenido_pagina(pathname):
             html.H1(children='Municipio'),
         ])
         
-        mpiodeptoDropdown = dcc.Dropdown(
-            id='mpioddepto',
-            options=deptosdpenmpios,
-            value='Todos los municipios',
-            placeholder="Elija un departamento..."
-        )
+        mpiodeptoDropdown = html.Div(
+            children=[
+                dbc.Label("Departamento"),
+                dcc.Dropdown(
+                    id='mpioddepto',
+                    options=deptosdpenmpios,
+                    value='Todos los municipios',
+                    placeholder="Elija un departamento..."
+                )
+            ]
+        ) 
 
-        mpiompioDropdown = dcc.Dropdown(
-            id='mpioddmpio',                    
-            placeholder="Elija un municipio..."
-        )
+        mpiompioDropdown =  html.Div(
+            children=[
+                dbc.Label("Municipio"),
+                dcc.Dropdown(
+                    id='mpioddmpio',                    
+                    placeholder="Elija un municipio..."
+                )
+            ]
+        ) 
+
+        formMpios = dbc.Form(
+            children=[
+                dbc.Row(
+                    children=[
+                        dbc.Col(children=[mpiodeptoDropdown],width=6),
+
+                        dbc.Col(children=[mpiompioDropdown],width=6)
+                    ]
+                )   
+            ],
+            class_name='form-dropdowns'
+        ) 
 
         return [               
             dataEnt,
             header,
-            mpiodeptoDropdown,
-            mpiompioDropdown,
+            formMpios,
             inicializarTabs('mpio')
         ]
     elif pathname == "/establecimiento":
@@ -351,29 +428,61 @@ def update_contenido_pagina(pathname):
             html.H1(children='Establecimiento educativo'),
         ])
 
-        estdeptoDropdown = dcc.Dropdown(
-            id='estdepto',
-            options=estDeptosDropdown,
-            value='Antioquia',
-            placeholder="Elija un departamento..."
+        estdeptoDropdown = html.Div(
+            children=[
+                dbc.Label("Departamento"),
+                dcc.Dropdown(
+                    id='estdepto',
+                    options=estDeptosDropdown,
+                    value='Antioquia',
+                    placeholder="Elija un departamento..."
+                )
+            ]
+        ) 
+
+        estmpioDropdown = html.Div(
+            children=[
+                dbc.Label("Municipio"),
+                dcc.Dropdown(
+                    id='estmpio',
+                    placeholder="Elija un municipio..."
+                )
+            ]
+        ) 
+
+        estDropdown = html.Div(
+            children=[
+                dbc.Label("Establecimiento"),
+                dcc.Dropdown(
+                    id='estestablmtos',            
+                    placeholder="Elija un establecimiento..."
+                )
+            ]
         )
 
-        estmpioDropdown = dcc.Dropdown(
-            id='estmpio',
-            placeholder="Elija un municipio..."
-        )
+        formEst = dbc.Form(
+            children=[
+                dbc.Row(
+                    children=[
+                        dbc.Col(children=[estdeptoDropdown],width=6),
 
-        estDropdown = dcc.Dropdown(
-            id='estestablmtos',            
-            placeholder="Elija un establecimiento..."
-        )
+                        dbc.Col(children=[estmpioDropdown],width=6)
+                    ]
+                ),
+                dbc.Row(
+                    children=[
+                        dbc.Col(children=[estDropdown],width=12),
+                    ],
+                    class_name='another-row'
+                )   
+            ],
+            class_name='form-dropdowns'
+        ) 
 
         return [  
             dataEst,
             header,
-            estdeptoDropdown,
-            estmpioDropdown,
-            estDropdown,
+            formEst,
             inicializarTabs('est')
         ]
     elif pathname == "/sede":
@@ -384,41 +493,87 @@ def update_contenido_pagina(pathname):
             html.H1(children='Sede de establecimiento educativo'),
         ])
 
-        estdeptoDropdown = dcc.Dropdown(
-            id='estdepto',
-            options=estDeptosDropdown,
-            value='Antioquia',
-            placeholder="Elija un departamento..."
+        sedeDeptoDropdown = html.Div(
+            children=[
+                dbc.Label("Departamento"),
+                dcc.Dropdown(
+                    id='estdepto',
+                    options=estDeptosDropdown,
+                    value='Antioquia',
+                    placeholder="Elija un departamento..."
+                )
+            ]
+        ) 
+
+        sedeMpioDropdown = html.Div(
+            children=[
+                dbc.Label("Municipio"),
+                dcc.Dropdown(
+                    id='estmpio',
+                    placeholder="Elija un municipio..."
+                )
+            ]
+        ) 
+
+        sedeEstDropdown = html.Div(
+            children=[
+                dbc.Label("Establecimiento"),
+                dcc.Dropdown(
+                    id='estestablmtos',           
+                    placeholder="Elija un establecimiento..."
+                )
+            ]
         )
 
-        estmpioDropdown = dcc.Dropdown(
-            id='estmpio',
-            placeholder="Elija un municipio..."
+        sedeSedeDropdown = html.Div(
+            children=[
+                dbc.Label("Sede"),
+                dcc.Dropdown(
+                    id='sedesede',            
+                    placeholder="Elija un establecimiento..."
+                )
+            ]
         )
 
-        estDropdown = dcc.Dropdown(
-            id='estestablmtos',           
-            placeholder="Elija un establecimiento..."
-        )
+        sedeJrnadasDropdown = html.Div(
+            children=[
+                dbc.Label("Jornada"),
+                dcc.Dropdown(
+                    id='sedejrnadas',            
+                    placeholder="Elija una jornada..."
+                )
+            ]
+        ) 
 
-        sedesedeDropdown = dcc.Dropdown(
-            id='sedesede',            
-            placeholder="Elija un establecimiento..."
-        )
-
-        sedejrnadasDropdown = dcc.Dropdown(
-            id='sedejrnadas',            
-            placeholder="Elija una jornada..."
-        )
+        formSede = dbc.Form(
+            children=[
+                dbc.Row(
+                    children=[
+                        dbc.Col(children=[sedeDeptoDropdown],width=6),
+                        dbc.Col(children=[sedeMpioDropdown],width=6)
+                    ]
+                ),
+                dbc.Row(
+                    children=[
+                        dbc.Col(children=[sedeEstDropdown],width=6),
+                        dbc.Col(children=[sedeSedeDropdown],width=6),
+                    ],
+                    class_name='another-row'
+                ),
+                dbc.Row(
+                    children=[
+                        dbc.Col(children=[sedeJrnadasDropdown],width=12),
+                    ],
+                    class_name='another-row'
+                ) 
+            ],
+            class_name='form-dropdowns'
+        ) 
 
         return [  
             dataSede,
             header,
-            estdeptoDropdown,
-            estmpioDropdown,
-            estDropdown,
-            sedesedeDropdown,
-            sedejrnadasDropdown,
+            formSede,
             inicializarTabs('sede')
         ]
     elif pathname == "/valplausibles":  
@@ -427,43 +582,63 @@ def update_contenido_pagina(pathname):
             html.H1(children='Valores plausibles'),
         ])
         
-        estdeptoDropdown = dcc.Dropdown(
-            id='estdepto',
-            options=estDeptosDropdown,
-            value='Antioquia',
-            placeholder="Elija un departamento..."
+        
+        estdeptoDropdown = html.Div(
+            children=[
+                dbc.Label("Departamento"),
+                dcc.Dropdown(
+                    id='estdepto',
+                    options=estDeptosDropdown,
+                    value='Antioquia',
+                    placeholder="Elija un departamento..."
+                )
+            ]
+        ) 
+
+        estmpioDropdown = html.Div(
+            children=[
+                dbc.Label("Municipio"),
+                dcc.Dropdown(
+                    id='estmpio',
+                    placeholder="Elija un municipio..."
+                )
+            ]
+        ) 
+
+        estDropdown = html.Div(
+            children=[
+                dbc.Label("Establecimiento"),
+                dcc.Dropdown(
+                    id='estestablmtos',            
+                    placeholder="Elija un establecimiento..."
+                )
+            ]
         )
 
-        estmpioDropdown = dcc.Dropdown(
-            id='estmpio',
-            placeholder="Elija un municipio..."
-        )
+        formEst = dbc.Form(
+            children=[
+                dbc.Row(
+                    children=[
+                        dbc.Col(children=[estdeptoDropdown],width=6),
 
-        estDropdown = dcc.Dropdown(
-            id='estestablmtos',           
-            placeholder="Elija un establecimiento..."
-        )
+                        dbc.Col(children=[estmpioDropdown],width=6)
+                    ]
+                ),
+                dbc.Row(
+                    children=[
+                        dbc.Col(children=[estDropdown],width=12),
+                    ],
+                    class_name='another-row'
+                )   
+            ],
+            class_name='form-dropdowns'
+        ) 
 
-        sedesedeDropdown = dcc.Dropdown(
-            id='sedesede',            
-            placeholder="Elija un establecimiento..."
-        )
-
-        sedejrnadasDropdown = dcc.Dropdown(
-            id='sedejrnadas',            
-            placeholder="Elija una jornada..."
-        )
-
-        return [
+        return [  
             header,
-            estdeptoDropdown,
-            estmpioDropdown,
-            estDropdown,
-            sedesedeDropdown,
-            sedejrnadasDropdown,
+            formEst,
             html.Div(id='contenedor-valplau',children=[])
         ]
-
     # Si se intenta acceder a url que no existe, se muestra un mensaje de error.
     return dbc.Jumbotron(
         [
@@ -479,32 +654,73 @@ def update_contenido_pagina(pathname):
 def inicializarTabs(pseudo_id):
 
     # Tabs que contiene la tabla y los gráficos.
-    tabsVistas = html.Div(id='div-tabs-vistas',children=[
-        dbc.Tabs(
-            [
-                dbc.Tab(label="Tabla", tab_id='tab-tabla-{}'.format(pseudo_id)),
-                dbc.Tab(label="Gráfico", tab_id='tab-grafico-{}'.format(pseudo_id)),
-            ],
-            id='tabs-vistas-{}'.format(pseudo_id),
-            active_tab='tab-tabla-{}'.format(pseudo_id),
-        ),
-        html.Div(id='content-tabs-vistas-{}'.format(pseudo_id)),
-    ])
+    tabsVistas = dbc.Card(
+        children=[
+            dbc.CardHeader(
+                children=[
+                    dbc.Tabs(
+                        [
+                            dbc.Tab(
+                                label="Tabla",
+                                tab_id='tab-tabla-{}'.format(pseudo_id),
+                                tab_class_name ='tab',
+                                active_tab_class_name = 'active-tab'
+                            ),
+                            dbc.Tab(
+                                label="Gráfico",
+                                tab_id='tab-grafico-{}'.format(pseudo_id),
+                                tab_class_name ='tab',
+                                active_tab_class_name = 'active-tab'
+                            ),
+                        ],
+                        id='tabs-vistas-{}'.format(pseudo_id),
+                        active_tab='tab-tabla-{}'.format(pseudo_id)
+                    )
+                ]
+            ),
+            dbc.CardBody(
+                html.Div(id='content-tabs-vistas-{}'.format(pseudo_id))
+            )
+        ]
+    )
 
     # Tabs que filtra por compentencia y tiene adentro a tabsVistas
-    tabsComp = html.Div(id='div-tabs-comp',children=[
-        dbc.Tabs(
-            [
-                dbc.Tab(label="Lenguaje", tab_id='tab-len-{}'.format(pseudo_id)),
-                dbc.Tab(label="Matemáticas", tab_id='tab-mat-{}'.format(pseudo_id)),
-                dbc.Tab(label="Ciencias naturales", tab_id='tab-nat-{}'.format(pseudo_id), disabled=True),
-                dbc.Tab(label="Competencias ciudadanas", tab_id='tab-ciu-{}'.format(pseudo_id), disabled=True),
-            ],
-            id='tabs-comp-{}'.format(pseudo_id),
-            active_tab='tab-len-{}'.format(pseudo_id),
-        ),
-        html.Div(id='content-tabs-comp-{}'.format(pseudo_id), children=tabsVistas),
-    ])
+    tabsComp = dbc.Card(
+        children=[
+            dbc.CardHeader(
+                children=[
+                    dbc.Tabs(
+                        [
+                            dbc.Tab(label="Lenguaje", tab_id='tab-len-{}'.format(pseudo_id)),
+                            dbc.Tab(label="Matemáticas", tab_id='tab-mat-{}'.format(pseudo_id)),
+                            dbc.Tab(label="Ciencias naturales", tab_id='tab-nat-{}'.format(pseudo_id), disabled=True),
+                            dbc.Tab(label="Competencias ciudadanas", tab_id='tab-ciu-{}'.format(pseudo_id), disabled=True),
+                        ],
+                        id='tabs-comp-{}'.format(pseudo_id),
+                        active_tab='tab-len-{}'.format(pseudo_id),
+                    )
+                ]
+            ),
+            dbc.CardBody(
+                html.Div(id='content-tabs-comp-{}'.format(pseudo_id), children=tabsVistas)
+            )
+        ]
+    )
+
+
+    # tabsComp = html.Div(id='div-tabs-comp',children=[
+    #     dbc.Tabs(
+    #         [
+    #             dbc.Tab(label="Lenguaje", tab_id='tab-len-{}'.format(pseudo_id)),
+    #             dbc.Tab(label="Matemáticas", tab_id='tab-mat-{}'.format(pseudo_id)),
+    #             dbc.Tab(label="Ciencias naturales", tab_id='tab-nat-{}'.format(pseudo_id), disabled=True),
+    #             dbc.Tab(label="Competencias ciudadanas", tab_id='tab-ciu-{}'.format(pseudo_id), disabled=True),
+    #         ],
+    #         id='tabs-comp-{}'.format(pseudo_id),
+    #         active_tab='tab-len-{}'.format(pseudo_id),
+    #     ),
+    #     html.Div(id='content-tabs-comp-{}'.format(pseudo_id), children=tabsVistas),
+    # ])
 
     return tabsComp    
 
@@ -538,37 +754,37 @@ def contenedorSegunTabActiva(valueDropdown,seleccion,tablaData,tabsVistasActiva,
 
         
         # Se crea un div con la información general del dataset y una tabla mostrando su contenido.
-        contenedorTabla = html.Div([
-            html.H2(children=valueDropdown),
-            html.Div([
-                html.Hr(),
-                html.P('Número de participantes: ' + str(*seleccion['N'].values)),
-                html.P('Puntaje promedio: ' + str(*seleccion['PUNTAJE_PROMEDIO'].values)),
-                html.P('Desviación: ' + str(*seleccion['DESVIACION'].values)),
-                html.P('Cuartil: ' + cuartil)
-            ]),
+        contenedorTabla = html.Div(
+            children=[
+                html.H2(className='nombre-seleccion',children=valueDropdown),
+                html.Div([
+                    html.P('Número de participantes: ' + str(*seleccion['N'].values)),
+                    html.P('Puntaje promedio: ' + str(*seleccion['PUNTAJE_PROMEDIO'].values)),
+                    html.P('Desviación: ' + str(*seleccion['DESVIACION'].values)),
+                    html.P('Cuartil: ' + cuartil)
+                ]),
 
-            # Creación de la tabla con el dataframe de la competencia escogida.
-            dash_table.DataTable(
-                id = 'tabla-info',
-                data=tablaData.to_dict('records'),
-                columns=[{'name': i, 'id': i,"selectable": True} for i in tablaData.columns],
-                sort_action="native",
-                sort_mode="multi",
-                fixed_rows={'headers': True},
-                page_size=10, 
-                style_cell={
-                    'minWidth': 250, 'maxWidth': 250, 'width': 250
-                },
-            ),
-        ])
+                # Creación de la tabla con el dataframe de la competencia escogida.
+                dash_table.DataTable(
+                    id = 'tabla-info',
+                    data=tablaData.to_dict('records'),
+                    columns=[{'name': i, 'id': i,"selectable": True} for i in tablaData.columns],
+                    sort_action="native",
+                    sort_mode="multi",
+                    fixed_rows={'headers': True},
+                    page_size=10, 
+                    style_cell={
+                        'minWidth': 250, 'maxWidth': 250, 'width': 250
+                    },
+                ),
+            ])
 
         contenedor = contenedorTabla        
     elif tabsVistasActiva == 'tab-grafico':
 
         # Se crea el div con el dropdown del tipo de gráfico y el gráfico como componente vacío.
         contenedorGraficos =html.Div([
-            html.H2(id='', className='', children='Grafico'),
+            html.H2(className='nombre-seleccion', children='Gráfico'),
 
             # Dropdown para elegir el tipo de gráfico
             dcc.Dropdown(id='dropdown-graficos',
@@ -750,7 +966,9 @@ def generarAnalisisAtributos(df):
             sort_action="native",
             sort_mode="multi",
             page_current= 0,
+            page_action='native',
             page_size= 10,
+            style_as_list_view=True,
             style_data={
                 'whitespace':'normal',
             },            
@@ -1363,7 +1581,7 @@ def actualizar_info_est(estestablmtos_value,tabsCompActiva,tabsVistasActiva):
     
         # Se crea un div con la información general del dataset y una tabla mostrando su contenido.
         contenedorTabla = html.Div([
-            html.H2(children=nombre['NOMBRE']),
+            html.H2(className='nombre-seleccion',children=nombre['NOMBRE']),
             html.Div([
                 html.Hr(),
                 html.P('Número de participantes: ' + str(*seleccion['PARTICIPANTES'].values)),
@@ -1392,7 +1610,7 @@ def actualizar_info_est(estestablmtos_value,tabsCompActiva,tabsVistasActiva):
 
         # Se crea el div con el dropdown del tipo de gráfico y el gráfico como componente vacío.
         contenedorGraficos =html.Div([
-            html.H2(id='', className='', children='Grafico'),
+            html.H2(className='nombre-seleccion',children='Gráfico'),
 
             # Dropdown para elegir el tipo de gráfico
             dcc.Dropdown(id='dropdown-graficos',
@@ -1466,21 +1684,6 @@ def actualizar_grafico_est(tipoGrafico,dataEst):
 
 
 '''=================CALLBACKS EN SEDE================='''
-# @app.callback(
-#     Output('estestablmtos','options'),
-#     [Input('estmpio','value')]
-# )
-# def actualizar_establecimientos(estmpio_value):
-
-#     # Se filtra por el municipio seleccionado y después se elimina los duplicados porque sino saldrían todas las sedes. Se hace drop duplicates en COD_DANE porque es el indicador único de un establecimiento.
-#     sedesCompletoCopy = sedesCompleto[sedesCompleto['MUNI_ID']==estmpio_value].drop_duplicates('COD_DANE')
-
-#     # NOMBRE_y es el nombre del establecimiento
-#     sedeestDropdown = [{'label': sedesCompletoCopy['NOMBRE_y'][i], 'value': sedesCompletoCopy['COD_DANE'][i]} for i in sedesCompletoCopy.index]
-
-#     return sedeestDropdown
-
-
 #Actualiza el dropdown de sede según el establecimiento seleccionado.
 @app.callback(
     Output('sedesede', 'options'),
@@ -1515,15 +1718,6 @@ def actualizar_jornadas(sedesede_value):
         jrnadadropdown.append(dic)
     
     return jrnadadropdown    
-
-# @app.callback(
-#     Output('sedeest','value'),
-#     [Input('sedeest','options')]
-# )
-# def update_dp(sedeest_options):
-#     if sedeest_options != []:
-#         return sedeest_options[0]['value']
-    
 
 @app.callback(
     Output('sedesede','value'),
@@ -1582,7 +1776,7 @@ def actualizar_info_est(sedejrnadas_value,tabsCompActiva,tabsVistasActiva):
     
         # Se crea un div con la información general del dataset y una tabla mostrando su contenido.
         contenedorTabla = html.Div([
-            html.H2(children=nombre['NOMBRE_x']),
+            html.H2(className='nombre-seleccion',children=nombre['NOMBRE_x']),
             html.Div([
                 html.Hr(),
                 html.P('Número de participantes: ' + str(*seleccion['PARTICIPANTES'].values)),
@@ -1609,7 +1803,7 @@ def actualizar_info_est(sedejrnadas_value,tabsCompActiva,tabsVistasActiva):
 
         # Se crea el div con el dropdown del tipo de gráfico y el gráfico como componente vacío.
         contenedorGraficos =html.Div([
-            html.H2(id='', className='', children='Grafico'),
+            html.H2(className='nombre-seleccion', children='Gráfico'),
 
             # Dropdown para elegir el tipo de gráfico
             dcc.Dropdown(id='dropdown-graficos',
@@ -1684,11 +1878,11 @@ def actualizar_grafico_est(tipoGrafico,dataEst):
 
 @app.callback(
     Output('contenedor-valplau','children'),
-    [Input('sedejrnadas', 'value')]
+    [Input('estestablmtos', 'value')]
 )
-def generarTablaValPlau(jrnada_seleccionada):
+def generarTablaValPlau(est_seleccionado):
 
-    seleccion = valPlauCompleto[valPlauCompleto['JORNADA']==jrnada_seleccionada]
+    seleccion = valPlauCompleto[valPlauCompleto['COD_DANE']==est_seleccionado]
 
     if seleccion.empty:
         return {},html.Div(['No se registran datos para este establecimiento'])
@@ -1707,16 +1901,21 @@ def generarTablaValPlau(jrnada_seleccionada):
         style_data={
             'whitespace':'normal',
         },
-        style_table={'overflowY': 'auto', 'overflowX': 'auto'},
+        style_cell={
+            'text-align':'right'
+        },
+        # style_table={
+        #     'height': '300px',
+        #     'overflowY': 'auto',
+        #     'overflowX': 'auto'
+        # },        
         virtualization=True
     )
     return [tablaValPlau]
 
-
-
 if __name__=='__main__':        
-    # app.config.suppress_callback_exceptions = True
-    app.enable_dev_tools(
-        dev_tools_prune_errors=False
-    )
-    app.run_server(debug=False,port=3000)
+    app.config.suppress_callback_exceptions = True
+    # app.enable_dev_tools(
+    #     dev_tools_prune_errors=False
+    # )
+    app.run_server(debug=True,port=3000)
