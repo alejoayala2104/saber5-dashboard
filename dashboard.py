@@ -60,16 +60,8 @@ sedeLen = pd.read_csv('csv/Sede/Lenguaje_Grado5_2017_Sede.csv',sep='|',encoding=
 # Matemáticas
 sedeMat =pd.read_csv('csv/Sede/Matematicas_Grado5_2017_Sede.csv',sep='|',encoding='utf-8',header=0)
 
-'''--------------Valores plausibles--------------'''
+'''--------------Valores Plausibles--------------'''
 valPlauColumnas = pd.read_csv('csv/Valores Plausibles/ValoresPlausibles_Grado5_2017_prueba.csv',sep='|',encoding='utf-8',header=0,nrows=100)
-# valPlauDict = valPlau.to_dict('records')
-
-# archivoValPlau = 'csv/Valores Plausibles/ValoresPlausibles_Grado5_2017.csv'
-# dataVlaPlau = []
-
-# with open(archivoValPlau, 'r') as data:      
-#     for line in csv.DictReader(data,delimiter="|"):
-#         dataVlaPlau.append(line)
 
 valPlauCompleto = pd.read_csv('csv/Valores Plausibles/ValoresPlausibles_Grado5_2017.csv',sep='|',encoding='utf-8',header=0)
 
@@ -650,6 +642,13 @@ def update_contenido_pagina(pathname):
 
 
 '''=================FUNCIONES GENERALES================='''
+def cargar_docs_toDict(filename):
+    docsDict = {}
+    archivo = open(filename,encoding='utf-8')
+    for linea in archivo: 
+        key, value = linea.strip().split('|')
+        docsDict[key] = value
+    return docsDict
 
 def inicializarTabs(pseudo_id):
 
@@ -725,7 +724,7 @@ def inicializarTabs(pseudo_id):
     return tabsComp    
 
 
-def contenedorSegunTabActiva(valueDropdown,seleccion,tablaData,tabsVistasActiva,idGrafico):
+def contenedorSegunTabActiva(valueDropdown,seleccion,tablaData,tabsVistasActiva,idGrafico,docsPath):
     """[Crea un contenedor con una tabla y su información general o uno con gráficos, dependiendo de la tab activa que reciba como parámetro.]
 
     Args:
@@ -769,6 +768,7 @@ def contenedorSegunTabActiva(valueDropdown,seleccion,tablaData,tabsVistasActiva,
                     id = 'tabla-info',
                     data=tablaData.to_dict('records'),
                     columns=[{'name': i, 'id': i,"selectable": True} for i in tablaData.columns],
+                    tooltip_header = cargar_docs_toDict(docsPath),
                     sort_action="native",
                     sort_mode="multi",
                     fixed_rows={'headers': True},
@@ -1083,7 +1083,7 @@ def actualizar_info_depto(deptodepto,tabsCompActiva,tabsVistasActiva):
 
     # Crea el contenedor que se va a enviar según la tab activa
     if tabsVistasActiva == 'tab-tabla-depto':
-        contenedorOutput = contenedorSegunTabActiva(deptodepto,seleccion,tablaData,'tab-tabla','grafico-depto')
+        contenedorOutput = contenedorSegunTabActiva(deptodepto,seleccion,tablaData,'tab-tabla','grafico-depto','csv/Departamento/deptosdocs.txt')
     elif tabsVistasActiva == 'tab-grafico-depto':
         contenedorOutput = contenedorSegunTabActiva(deptodepto,seleccion,tablaData,'tab-grafico','grafico-depto')   
 
@@ -1175,7 +1175,7 @@ def actualizar_info_zona(zonaszonas,tabsCompActiva,tabsVistasActiva):
     
     # Crea el contenedor que se va a enviar según la tab activa
     if tabsVistasActiva == 'tab-tabla-zona':
-        contenedorOutput = contenedorSegunTabActiva(zonaszonas,seleccion,tablaData,'tab-tabla','grafico-zona')
+        contenedorOutput = contenedorSegunTabActiva(zonaszonas,seleccion,tablaData,'tab-tabla','grafico-zona','csv/Zonas/zonasdocs.txt')
     elif tabsVistasActiva == 'tab-grafico-zona':
         contenedorOutput = contenedorSegunTabActiva(zonaszonas,seleccion,tablaData,'tab-grafico','grafico-zona')    
 
@@ -1302,7 +1302,7 @@ def actualizar_info_ent(etdropdownvalue,tabsCompActiva,tabsVistasActiva):
     
     # Crea el contenedor que se va a enviar según la tab activa
     if tabsVistasActiva == 'tab-tabla-ent':
-        contenedorOutput = contenedorSegunTabActiva(etdropdownvalue,seleccion,tablaData,'tab-tabla','grafico-ent')
+        contenedorOutput = contenedorSegunTabActiva(etdropdownvalue,seleccion,tablaData,'tab-tabla','grafico-ent','csv/Entidad Territorial/entdocs.txt')
     elif tabsVistasActiva == 'tab-grafico-ent':
         contenedorOutput = contenedorSegunTabActiva(etdropdownvalue,seleccion,tablaData,'tab-grafico','grafico-ent')
 
@@ -1426,7 +1426,7 @@ def actualizar_info_mpio(mpioddmpiovalue,tabsCompActiva,tabsVistasActiva):
     
     # Crea el contenedor que se va a enviar según la tab activa
     if tabsVistasActiva == 'tab-tabla-mpio':
-        contenedorOutput = contenedorSegunTabActiva(seleccion['MUNI_NOMBRE'],seleccion,tablaData,'tab-tabla','grafico-mpio')
+        contenedorOutput = contenedorSegunTabActiva(seleccion['MUNI_NOMBRE'],seleccion,tablaData,'tab-tabla','grafico-mpio','csv/Municipios/mpiosdocs.txt')
     elif tabsVistasActiva == 'tab-grafico-mpio':
         contenedorOutput = contenedorSegunTabActiva(mpioddmpiovalue,seleccion,tablaData,'tab-grafico','grafico-mpio')
 
@@ -1591,10 +1591,12 @@ def actualizar_info_est(estestablmtos_value,tabsCompActiva,tabsVistasActiva):
             ]),
 
             # Creación de la tabla con el dataframe de la competencia escogida.
+            
             dash_table.DataTable(
                 id = 'tabla-info',
                 data=seleccion.to_dict('records'),
                 columns=[{'name': i, 'id': i,"selectable": True} for i in seleccion.columns],
+                tooltip_header = cargar_docs_toDict('csv/Establecimiento/estdocs.txt'),
                 sort_action="native",
                 sort_mode="multi",
                 fixed_rows={'headers': True},
@@ -1788,6 +1790,7 @@ def actualizar_info_est(sedejrnadas_value,tabsCompActiva,tabsVistasActiva):
                 id = 'tabla-info',
                 data=seleccion.to_dict('records'),
                 columns=[{'name': i, 'id': i,"selectable": True} for i in seleccion.columns],
+                tooltip_header = cargar_docs_toDict('csv/Sede/sedesdocs.txt'),
                 sort_action="native",
                 sort_mode="multi",
                 fixed_rows={'headers': True},
@@ -1891,8 +1894,9 @@ def generarTablaValPlau(est_seleccionado):
         id='valplautable',
         columns= [
             {"name": i, "id": i}
-            for i in valPlauColumnas.columns
+            for i in valPlauCompleto.columns
         ],
+        tooltip_header= cargar_docs_toDict('csv/Valores Plausibles/valplaudocs.txt'),
         data= seleccion.to_dict('records'),
         filter_action= "native",
         sort_action="native",

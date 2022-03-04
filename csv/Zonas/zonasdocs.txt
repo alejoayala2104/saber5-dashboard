@@ -1,0 +1,9 @@
+ZONA|Nombre de la zona
+PUNTAJE_PROMEDIO|Promedio de los puntajes de los estudiantes dentro de la zona
+ERRORESTANDARPROMEDIO|Error estándar del promedio de los puntajes de los estudiantes dentro de la zona
+DESVIACION|Desviación estándar del puntaje de los estudiantes dentro de la zona
+PORCENTAJE_INSUFICIENTE|Porcentaje de estudiantes en el nivel de desempeño insuficiente (1)
+PORCENTAJE_MINIMO|Porcentaje de estudiantes en el nivel de desempeño mínimo (2)
+PORCENTAJE_SATISFACTORIO|Porcentaje de estudiantes en el nivel de desempeño satisfactorio (3)
+PORCENTAJE_AVANZADO|Porcentaje de estudiantes en el nivel de desempeño avanzado (4)
+N|Número de participantes

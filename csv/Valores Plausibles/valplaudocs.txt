@@ -1,0 +1,53 @@
+ESTU_CONSECUTIVO|Identificador consecutivo del evaluado
+GRUPO|Grupo/Salón al que pertenecen los estudiantes*
+N|Número de matriculados en el grupo al que pertenecen*
+ESTRATO|Estrato al que pertenece el Establecimiento dentro del marco muestral
+APLICACION|Para 2009: M=Mayo, O=Octubre. Para 2012 en adelante: X=No definido
+GRADO|Grado del estudiante: 3, 5, 9
+JORNADA|Para 2009: Jornada en la que desempeña actividades y para la que se reporta resultados: M=Mañana, T=Tarde, C=Completa. Para 2012 en adelante: Código Saber de la sede-jornada (ID_SEDE)
+COD_DANE|Código DANE del Establecimiento Educativo
+ENTETERR|Identificación del ente territorial a la que pertenece el Establecimiento Educativo
+DEPARTAMENTO|Código DANE del departamento
+MUNICIPIO|Código DANE del municipio al que pertenece el Establecimiento Educativo
+SEXO|Sexo del estudiante: 1=Masculino, 2=Femenino, 3=No Especifica
+SECTOR|Naturaleza administrativa del Establecimiento Educativo según el DUE: 1=Oficial, 2=No Oficial
+ZONA|Zona de la sede-jornada: 1=Urbana, 2=Rural
+ZONASTAB|Zona del Establecimiento Educativo: 1=Urbana, 2=Rural *
+ZONA_SECTOR|Naturaleza y sector del Establecimiento Educativo: 1=Oficial-Urbano, 2=Oficial-Rural, 3=No Oficial.**
+CALENDARIO|Calendario del Establecimiento: A=Calendario A, B=Calendario B *
+NIVEL|Nivel Socioeconómico (NSE) asignado de acuerdo a la clasificación realizada con puntajes promedios: 1=NSE 1, 2=NSE 2, 3=NSE 3, 4=NSE=4, 5=Sin NSE
+MODELOEDU|Modelo educativo: X=No definido*
+PRUEBA|Prueba que presentó el estudiante: L=Lenguaje, M=Matemáticas, C=Ciencias Naturales**
+FI|Factor de expansión del diseño muestral de la primera etapa**
+FII|Factor de expansión del diseño muestral de la segunda etapa**
+FIII|Factor de expansión del diseño muestral de la tercera etapa**
+JKN|Número de unidades primarias de muestreo**
+DISSENSO|Indicador de discapacidad cognitiva: 0=Sin discapacidad, 1=Con discapacidad*
+LENG_COPIETAS|Indicador de copia de lenguaje: 0=No copia, 1=Con copia*
+LENG_WEIGHT|Peso muestral de lenguaje
+LENG_SCORE1|Score1 – Valor plausible 1 de lenguaje
+LENG_SCORE2|Score2 – Valor plausible 2 de lenguaje
+LENG_SCORE3|Score3 – Valor plausible 3 de lenguaje
+LENG_SCORE4|Score4 – Valor plausible 4 de lenguaje
+LENG_SCORE5|Score5 – Valor plausible 5 de lenguaje
+MATE_COPIETAS|Indicador de copia de matemáticas: 0=No copia, 1=Con copia*
+MATE_WEIGHT|Peso muestral de matemáticas
+MATE_SCORE1|Score1 – Valor plausible 1 de matemáticas
+MATE_SCORE2|Score2 – Valor plausible 2 de matemáticas
+MATE_SCORE3|Score3 – Valor plausible 3 de matemáticas
+MATE_SCORE4|Score4 – Valor plausible 4 de matemáticas
+MATE_SCORE5|Score5 – Valor plausible 5 de matemáticas
+CIEN_COPIETAS|Indicador de copia de ciencias naturales: 0=No copia, 1=Con copia*
+CIEN_WEIGHT|Peso muestral de ciencias naturales
+CIEN_SCORE1|Score1 – Valor plausible 1 de ciencias naturales
+CIEN_SCORE2|Score2 – Valor plausible 2 de ciencias naturales
+CIEN_SCORE3|Score3 – Valor plausible 3 de ciencias naturales
+CIEN_SCORE4|Score4 – Valor plausible 4 de ciencias naturales
+CIEN_SCORE5|Score5 – Valor plausible 5 de ciencias naturales
+COMP_COPIETAS|Indicador de copia de competencias ciudadanas: 0=No copia, 1=Con copia*
+COMP_WEIGHT|Peso muestral de competencias ciudadanas
+COMP_SCORE1|Score1 – Valor plausible 1 de competencias ciudadanas
+COMP_SCORE2|Score2 – Valor plausible 2 de competencias ciudadanas
+COMP_SCORE3|Score3 – Valor plausible 3 de competencias ciudadanas
+COMP_SCORE4|Score4 – Valor plausible 4 de competencias ciudadanas
+COMP_SCORE5|Score5 – Valor plausible 5 de competencias ciudadanas

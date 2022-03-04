@@ -1,0 +1,10 @@
+ID_SEDE|Código Saber de la sede-jornada
+CODIGO_DANE_SEDE|Código DANE de la sede del Establecimiento Educativo
+JORNADA|Jornada en la que desempeña actividades y para la que se reporta resultados: M=Mañana. T=Tarde. C=Completa
+EVALUADOS|Total de estudiantes del Establecimiento Educativo que participan en la evaluación
+PARTICIPANTES|Total de estudiantes del Establecimiento Educativo que asistieron a la prueba
+COPIA|Indicio de copia en el área: 0= No se presentan indicios de copia. 1= Indicios de copia individual. 2= Indicios de copia masiva en alguna sede-jornada
+INSUFICIENTE|Número de estudiantes en el nivel de desempeño insuficiente (1)
+MINIMO|Número de estudiantes en el nivel de desempeño mínimo (2)
+SATISFACTORIO|Número de estudiantes en el nivel de desempeño satisfactorio (3)
+AVANZADO|Número de estudiantes en el nivel de desempeño avanzado (4)

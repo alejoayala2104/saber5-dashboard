@@ -1,0 +1,12 @@
+COD_DANE|Código DANE del Establecimiento Educativo
+EVALUADOS|Total de estudiantes del Establecimiento Educativo que participan en la evaluación
+PARTICIPANTES|Total de estudiantes del Establecimiento Educativo que asistieron a la prueba
+COPIA|Indicio de copia en el área: 0= No se presentan indicios de copia. 1= Indicios de copia individual. 2= Indicios de copia masiva en alguna sede-jornada
+PESO|Peso o ponderación a usar para el cálculo de agregados con la información a nivel sede-jornada
+PROMEDIO|Promedio de los puntajes de los estudiantes dentro del Establecimiento Educativo
+ERROR_ESTANDAR|Error estándar del promedio de los puntajes de los estudiantes dentro del Establecimiento Educativo
+DESVIACION|Desviación estándar del puntaje de los estudiantes dentro del Establecimiento Educativo
+INSUFICIENTE|Porcentaje de estudiantes en el nivel de desempeño insuficiente (1)
+MINIMO|Porcentaje de estudiantes en el nivel de desempeño mínimo (2)
+SATISFACTORIO|Porcentaje de estudiantes en el nivel de desempeño satisfactorio (3)
+AVANZADO|Porcentaje de estudiantes en el nivel de desempeño avanzado (4)
