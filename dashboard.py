@@ -11,6 +11,7 @@ import io
 
 # Se utilizan elementos BOOSTRAP, pero al existir la carpeta assets con un archivo css, automáticamente el programa añade y sigue esa hoja de estilos en conjunto con los elementos de BOOSTRAP.
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
+app.title = "Kai Saber 5"
 
 '''=================LECTURA DE ARCHIVOS PLANOS================='''
 
@@ -121,23 +122,25 @@ sedesCompleto = pd.merge(sedesJoin,estInfo[['COD_DANE','MUNI_ID','NOMBRE']],on='
 
 '''=================LAYOUT GENERAL================='''
 menu = html.Div(    
-    [
-        html.H2("Saber 5", className="display-4"),
-        html.Hr(),
-        html.P("Dashboard", className="lead"
-        ),
+    children= [
+        html.Div(className='kai5-header',children=[
+            html.Img(id='grias-logo',
+                src='assets/logos/grias_logo.png', alt='GRIAS logo'),
+            html.H2(['KAI SABER 5'])
+        ]),
         dbc.Nav(
             [
                 #'exact' es igual a active=True -> Cuando el pathName sea igual a href.
                 #'href' es la ruta (url) que va a tener la página.
-                dbc.NavLink("Análisis", href="/",active="exact"),
-                dbc.NavLink("Departamento", href="/departamento",active="exact"),
-                dbc.NavLink("Zona", href="/zona",active="exact"),
-                dbc.NavLink("Entidad territorial", href="/entidadter",active="exact"),
-                dbc.NavLink("Municipio", href="/municipio",active="exact"),
-                dbc.NavLink("Establecimiento", href="/establecimiento",active="exact"),
-                dbc.NavLink("Sede", href="/sede",active="exact"),
-                dbc.NavLink("Valores plausibles", href="/valplausibles",active="exact"),
+                dbc.NavLink("Análisis", href="/",active="exact",class_name='nav-sidebar'),
+                dbc.NavLink("Departamento", href="/departamento",active="exact",class_name='nav-sidebar'),
+                dbc.NavLink("Zona", href="/zona",active="exact",class_name='nav-sidebar'),
+                dbc.NavLink("Municipio", href="/municipio",active="exact",class_name='nav-sidebar'),
+                dbc.NavLink("Entidad territorial", href="/entidadter",active="exact",class_name='nav-sidebar'),
+                dbc.NavLink("Establecimiento", href="/establecimiento",active="exact",class_name='nav-sidebar'),
+                dbc.NavLink("Sede", href="/sede",active="exact",class_name='nav-sidebar'),
+                dbc.NavLink("Valores plausibles", href="/valplausibles",active="exact",class_name='nav-sidebar'),     
+                dbc.NavLink("Estudiantes", href="/estudiantes",active="exact",class_name='nav-sidebar')           
             ],
             vertical=True,
             pills=True,  
@@ -147,10 +150,10 @@ menu = html.Div(
     className="contenedor-menu"
 )
 
-content = html.Div(id="page-content", children=[],className="contenido-pestana")
+content = html.Div(id="page-content",children=[],className="contenedor-pestana")
 
 # Se crea el layout general con los componentes anteriomente creados.
-app.layout = html.Div([
+app.layout = html.Div(className='contenedor-general', children=[
     dcc.Location(id="url"),
     menu,
     content
@@ -214,12 +217,14 @@ def update_contenido_pagina(pathname):
 
         return [
             header,
-            inputSeparador,
-            upload,                 
-            # Mostrará la tabla según el archivo subido.                         
-            html.Div(id='output-data-upload'),
-            # Mostrará la información del atributo escogido en la tabla.
-            html.Div(id='info-atributo')
+            html.Div(className='resultado-pestana', children=[
+                inputSeparador,
+                upload,
+                # Mostrará la tabla según el archivo subido.                         
+                html.Div(id='output-data-upload'),
+                # Mostrará la información del atributo escogido en la tabla.
+                html.Div(id='info-atributo')
+            ])
         ]
     elif pathname == "/departamento":
         
@@ -266,10 +271,12 @@ def update_contenido_pagina(pathname):
         )    
 
         return html.Div([
-            dataDeptos,
             header,
-            formDeptos,
-            inicializarTabs('depto')
+            html.Div(className='resultado-pestana', children=[
+                dataDeptos,            
+                formDeptos,
+                inicializarTabs('depto')
+            ])
         ])        
     elif pathname == "/zona":
 
@@ -304,10 +311,12 @@ def update_contenido_pagina(pathname):
         )  
 
         return [
-            dataZona,
             header,
-            formZonas, 
-            inicializarTabs('zona')
+            html.Div(className='resultado-pestana', children=[
+                dataZona,            
+                formZonas, 
+                inicializarTabs('zona')
+            ])
         ]
     elif pathname == "/entidadter":
 
@@ -356,10 +365,12 @@ def update_contenido_pagina(pathname):
         )  
 
         return [
-            dataEnt,
             header,
-            formEnt,            
-            inicializarTabs('ent')
+            html.Div(className='resultado-pestana', children=[
+                dataEnt,            
+                formEnt,            
+                inicializarTabs('ent')
+            ])
         ]
     elif pathname == "/municipio":
 
@@ -405,11 +416,13 @@ def update_contenido_pagina(pathname):
             class_name='form-dropdowns'
         ) 
 
-        return [               
-            dataEnt,
-            header,
-            formMpios,
-            inicializarTabs('mpio')
+        return [    
+            header,           
+            html.Div(className='resultado-pestana', children=[
+                dataEnt,            
+                formMpios,
+                inicializarTabs('mpio')
+            ])
         ]
     elif pathname == "/establecimiento":
 
@@ -471,11 +484,13 @@ def update_contenido_pagina(pathname):
             class_name='form-dropdowns'
         ) 
 
-        return [  
-            dataEst,
-            header,
-            formEst,
-            inicializarTabs('est')
+        return [
+            header,  
+            html.Div(className='resultado-pestana', children=[
+                dataEst,            
+                formEst,
+                inicializarTabs('est')
+            ])
         ]
     elif pathname == "/sede":
         # Guarda los datos que se generan en el callback de creación de la tabs.
@@ -562,11 +577,13 @@ def update_contenido_pagina(pathname):
             class_name='form-dropdowns'
         ) 
 
-        return [  
-            dataSede,
-            header,
-            formSede,
-            inicializarTabs('sede')
+        return [
+            header,  
+            html.Div(className='resultado-pestana', children=[
+                dataSede,            
+                formSede,
+                inicializarTabs('sede')
+            ])
         ]
     elif pathname == "/valplausibles":  
 
@@ -628,8 +645,21 @@ def update_contenido_pagina(pathname):
 
         return [  
             header,
-            formEst,
-            html.Div(id='contenedor-valplau',children=[])
+            html.Div(className='resultado-pestana', children=[
+                formEst,
+                html.Div(id='contenedor-valplau',children=[])
+            ])
+        ]
+    elif pathname == "/estudiantes":  
+
+        header =  html.Div(className='header', children=[
+            html.H1(children='Estudiantes'),
+        ])
+        return [
+            header,
+            html.Div(className='resultado-pestana', children=[
+                
+            ])
         ]
     # Si se intenta acceder a url que no existe, se muestra un mensaje de error.
     return dbc.Jumbotron(
@@ -690,10 +720,10 @@ def inicializarTabs(pseudo_id):
                 children=[
                     dbc.Tabs(
                         [
-                            dbc.Tab(label="Lenguaje", tab_id='tab-len-{}'.format(pseudo_id)),
-                            dbc.Tab(label="Matemáticas", tab_id='tab-mat-{}'.format(pseudo_id)),
-                            dbc.Tab(label="Ciencias naturales", tab_id='tab-nat-{}'.format(pseudo_id), disabled=True),
-                            dbc.Tab(label="Competencias ciudadanas", tab_id='tab-ciu-{}'.format(pseudo_id), disabled=True),
+                            dbc.Tab(label="Lenguaje", tab_id='tab-len-{}'.format(pseudo_id), tab_class_name ='tab'),
+                            dbc.Tab(label="Matemáticas", tab_id='tab-mat-{}'.format(pseudo_id), tab_class_name ='tab'),
+                            dbc.Tab(label="Ciencias naturales", tab_id='tab-nat-{}'.format(pseudo_id), disabled=True, tab_class_name ='tab'),
+                            dbc.Tab(label="Competencias ciudadanas", tab_id='tab-ciu-{}'.format(pseudo_id), disabled=True, tab_class_name ='tab'),
                         ],
                         id='tabs-comp-{}'.format(pseudo_id),
                         active_tab='tab-len-{}'.format(pseudo_id),
@@ -772,10 +802,23 @@ def contenedorSegunTabActiva(valueDropdown,seleccion,tablaData,tabsVistasActiva,
                     sort_action="native",
                     sort_mode="multi",
                     fixed_rows={'headers': True},
-                    page_size=10, 
+                    page_size=7, 
+                    style_table = {"borderRadius": "10px", "overflow": "hidden"},
                     style_cell={
-                        'minWidth': 250, 'maxWidth': 250, 'width': 250
+                        'fontFamily': '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans",sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol","Noto Color Emoji"',
+                        'textAlign': 'left',                        
+                        'padding':'0.75rem',
+                        'border':'none',
+                        'border-bottom':'1px solid rgb(0,0,0,0.1)',
+                        'borderRadius':'1rem',
+                        'minWidth': 300, 'maxWidth': 300, 'width': 300
                     },
+                    style_header={
+                        'background-color': '#008000',
+                        'color': '#ffffff',
+                        'text-align': 'left',
+                        'borderRadius':'1rem',
+                    }
                 ),
             ])
 
@@ -864,7 +907,7 @@ def parse_contents(contents, filename, sepr):
     except Exception as e:
         print(e)
         return html.Div([
-            'No se pudo cargar el archivo. Revisar separador'
+            dbc.Alert("No se pudo cargar el archivo. Revisar separador", color="danger")
         ])
 
     tablaArchivo = dash_table.DataTable(
@@ -874,12 +917,27 @@ def parse_contents(contents, filename, sepr):
         sort_action="native",
         sort_mode="multi",
         page_current= 0,
-        page_size= 10,
-        style_data={
-            'whitespace':'normal',
-        },           
-        style_table={'overflowY': 'auto', 'overflowX': 'auto'}, 
-        # virtualization=True
+        page_size= 7,                   
+        style_table = {
+            "borderRadius": "10px",
+            'overflowY': 'auto',
+            'overflowX': 'auto'
+        },
+        style_cell={
+            'fontFamily': '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans",sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol","Noto Color Emoji"',
+            'textAlign': 'left',                        
+            'padding':'0.75rem',
+            'border':'none',
+            'border-bottom':'1px solid rgb(0,0,0,0.1)',
+            'borderRadius':'1rem',
+            'minWidth': 300, 'maxWidth': 300, 'width': 300
+        },    
+        style_header={
+            'background-color': '#008000',
+            'color': '#ffffff',
+            'text-align': 'left',
+            'borderRadius':'1rem',
+        } 
     )   
     analisisAtributo = generarAnalisisAtributos(df)
 
@@ -965,14 +1023,30 @@ def generarAnalisisAtributos(df):
             selected_rows=[0],
             sort_action="native",
             sort_mode="multi",
-            page_current= 0,
             page_action='native',
-            page_size= 10,
+            page_size= 7,
+            fixed_rows={'headers': True},
             style_as_list_view=True,
-            style_data={
-                'whitespace':'normal',
-            },            
-            virtualization=True
+            style_table = {
+            "borderRadius": "10px",
+            'overflowY': 'auto',
+            'overflowX': 'auto'
+            },
+            style_cell={
+                'fontFamily': '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans",sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol","Noto Color Emoji"',
+                'textAlign': 'left',
+                'padding':'0.75rem',
+                'border':'none',
+                'border-bottom':'1px solid rgb(0,0,0,0.1)',
+                'borderRadius':'1rem',
+                'minWidth': 300, 'maxWidth': 300, 'width': 300
+            },    
+            style_header={
+                'background-color': '#352b2b',
+                'color': '#ffffff',
+                'text-align': 'left',
+                'borderRadius':'1rem',
+            }
         )
     
     return html.Div([
@@ -1085,7 +1159,7 @@ def actualizar_info_depto(deptodepto,tabsCompActiva,tabsVistasActiva):
     if tabsVistasActiva == 'tab-tabla-depto':
         contenedorOutput = contenedorSegunTabActiva(deptodepto,seleccion,tablaData,'tab-tabla','grafico-depto','csv/Departamento/deptosdocs.txt')
     elif tabsVistasActiva == 'tab-grafico-depto':
-        contenedorOutput = contenedorSegunTabActiva(deptodepto,seleccion,tablaData,'tab-grafico','grafico-depto')   
+        contenedorOutput = contenedorSegunTabActiva(deptodepto,seleccion,tablaData,'tab-grafico','grafico-depto','')   
 
     # Genera un dict que será enviado al callback de actualizar gráfico a través del Output de dcc.Store
     dataGrafico = generarDataParaGrafico(seleccion)
@@ -1177,7 +1251,7 @@ def actualizar_info_zona(zonaszonas,tabsCompActiva,tabsVistasActiva):
     if tabsVistasActiva == 'tab-tabla-zona':
         contenedorOutput = contenedorSegunTabActiva(zonaszonas,seleccion,tablaData,'tab-tabla','grafico-zona','csv/Zonas/zonasdocs.txt')
     elif tabsVistasActiva == 'tab-grafico-zona':
-        contenedorOutput = contenedorSegunTabActiva(zonaszonas,seleccion,tablaData,'tab-grafico','grafico-zona')    
+        contenedorOutput = contenedorSegunTabActiva(zonaszonas,seleccion,tablaData,'tab-grafico','grafico-zona','')    
 
     # Genera un dict que será enviado al callback de actualizar gráfico a través del Output de dcc.Store
     dataGrafico = generarDataParaGrafico(seleccion)
@@ -1304,7 +1378,7 @@ def actualizar_info_ent(etdropdownvalue,tabsCompActiva,tabsVistasActiva):
     if tabsVistasActiva == 'tab-tabla-ent':
         contenedorOutput = contenedorSegunTabActiva(etdropdownvalue,seleccion,tablaData,'tab-tabla','grafico-ent','csv/Entidad Territorial/entdocs.txt')
     elif tabsVistasActiva == 'tab-grafico-ent':
-        contenedorOutput = contenedorSegunTabActiva(etdropdownvalue,seleccion,tablaData,'tab-grafico','grafico-ent')
+        contenedorOutput = contenedorSegunTabActiva(etdropdownvalue,seleccion,tablaData,'tab-grafico','grafico-ent','')
 
     # Genera un dict que será enviado al callback de actualizar gráfico a través del Output de dcc.Store
     dataGrafico = generarDataParaGrafico(seleccion)
@@ -1428,7 +1502,7 @@ def actualizar_info_mpio(mpioddmpiovalue,tabsCompActiva,tabsVistasActiva):
     if tabsVistasActiva == 'tab-tabla-mpio':
         contenedorOutput = contenedorSegunTabActiva(seleccion['MUNI_NOMBRE'],seleccion,tablaData,'tab-tabla','grafico-mpio','csv/Municipios/mpiosdocs.txt')
     elif tabsVistasActiva == 'tab-grafico-mpio':
-        contenedorOutput = contenedorSegunTabActiva(mpioddmpiovalue,seleccion,tablaData,'tab-grafico','grafico-mpio')
+        contenedorOutput = contenedorSegunTabActiva(mpioddmpiovalue,seleccion,tablaData,'tab-grafico','grafico-mpio','')
 
     # Genera un dict que será enviado al callback de actualizar gráfico a través del Output de dcc.Store
     dataGrafico = generarDataParaGrafico(seleccion)
@@ -1563,7 +1637,7 @@ def actualizar_info_est(estestablmtos_value,tabsCompActiva,tabsVistasActiva):
 
     # Si el establecimiento no presentó la prueba
     if seleccion.empty:
-        return {},html.Div(['No se registran datos para este establecimiento'])
+        return {},html.Div([dbc.Alert("No se registran datos para este establecimiento", color="danger")])
     
     # Devuelve un contenedor dependiendo de la competencia seleccionada
     if tabsVistasActiva == 'tab-tabla-est':
@@ -1600,10 +1674,27 @@ def actualizar_info_est(estestablmtos_value,tabsCompActiva,tabsVistasActiva):
                 sort_action="native",
                 sort_mode="multi",
                 fixed_rows={'headers': True},
-                page_size=10, 
-                style_cell={
-                    'minWidth': 250, 'maxWidth': 250, 'width': 250
+                page_size=7, 
+                style_table = {
+                "borderRadius": "10px",
+                'overflowY': 'auto',
+                'overflowX': 'auto'
                 },
+                style_cell={
+                    'fontFamily': '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans",sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol","Noto Color Emoji"',
+                    'textAlign': 'left',
+                    'padding':'0.75rem',
+                    'border':'none',
+                    'border-bottom':'1px solid rgb(0,0,0,0.1)',
+                    'borderRadius':'1rem',
+                    'minWidth': 300, 'maxWidth': 300, 'width': 300
+                },    
+                style_header={
+                    'background-color': '#008000',
+                    'color': '#ffffff',
+                    'text-align': 'left',
+                    'borderRadius':'1rem'
+                }                
             ),
         ])
 
@@ -1771,7 +1862,7 @@ def actualizar_info_est(sedejrnadas_value,tabsCompActiva,tabsVistasActiva):
 
     # Si el establecimiento no presentó la prueba
     if seleccion.empty:
-        return {},html.Div(['No se registran datos para este establecimiento'])
+        return {},html.Div([dbc.Alert("No se registran datos para este establecimiento", color="danger")])
     
     # Devuelve un contenedor dependiendo de la competencia seleccionada
     if tabsVistasActiva == 'tab-tabla-sede':
@@ -1794,10 +1885,27 @@ def actualizar_info_est(sedejrnadas_value,tabsCompActiva,tabsVistasActiva):
                 sort_action="native",
                 sort_mode="multi",
                 fixed_rows={'headers': True},
-                page_size=10, 
-                style_cell={
-                    'minWidth': 250, 'maxWidth': 250, 'width': 250
+                page_size=7, 
+                style_table = {
+                "borderRadius": "10px",
+                'overflowY': 'auto',
+                'overflowX': 'auto'
                 },
+                style_cell={
+                    'fontFamily': '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans",sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol","Noto Color Emoji"',
+                    'textAlign': 'left',
+                    'padding':'0.75rem',
+                    'border':'none',
+                    'border-bottom':'1px solid rgb(0,0,0,0.1)',
+                    'borderRadius':'1rem',
+                    'minWidth': 300, 'maxWidth': 300, 'width': 300
+                },    
+                style_header={
+                    'background-color': '#008000',
+                    'color': '#ffffff',
+                    'text-align': 'left',
+                    'borderRadius':'1rem'
+                }
             ),
         ])
 
@@ -1888,7 +1996,7 @@ def generarTablaValPlau(est_seleccionado):
     seleccion = valPlauCompleto[valPlauCompleto['COD_DANE']==est_seleccionado]
 
     if seleccion.empty:
-        return {},html.Div(['No se registran datos para este establecimiento'])
+        return {},html.Div([dbc.Alert("No se registran datos para este establecimiento", color="danger")])
 
     tablaValPlau = dash_table.DataTable(
         id='valplautable',
@@ -1899,21 +2007,31 @@ def generarTablaValPlau(est_seleccionado):
         tooltip_header= cargar_docs_toDict('csv/Valores Plausibles/valplaudocs.txt'),
         data= seleccion.to_dict('records'),
         filter_action= "native",
-        sort_action="native",
-        sort_mode="multi",
-        page_size=20,
+        sort_action="native",   
+        page_size=7,
         style_data={
             'whitespace':'normal',
         },
-        style_cell={
-            'text-align':'right'
+        style_table = {
+        'borderRadius': '10px',
+        'overflowY': 'auto',
+        'overflowX': 'auto',
         },
-        # style_table={
-        #     'height': '300px',
-        #     'overflowY': 'auto',
-        #     'overflowX': 'auto'
-        # },        
-        virtualization=True
+        style_cell={
+            'fontFamily': '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans",sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol","Noto Color Emoji"',
+            'textAlign': 'left',
+            'padding':'0.75rem',
+            'border':'none',
+            'border-bottom':'1px solid rgb(0,0,0,0.1)',
+            'borderRadius':'1rem',
+            'minWidth': 300, 'maxWidth': 300, 'width': 300
+        },    
+        style_header={
+            'background-color': '#008000',
+            'color': '#ffffff',
+            'text-align': 'left',
+            'borderRadius':'1rem'
+        }
     )
     return [tablaValPlau]
 
