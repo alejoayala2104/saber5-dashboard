@@ -1,3 +1,44 @@
-version https://git-lfs.github.com/spec/v1
-oid sha256:1b0e811b6204da01604876d6f461c4037983727e2a2f8c43bb0a28e751585b83
-size 3304
+estu_tipodocumento|Tipo de Documento. CC - Cédula de Ciudadanía CCB - Certificado Cabildo CE - Cédula de Extranjería CR - Contraseña Registraduría NES - Número de Identificación establecido por la Secretaría de Educación NUIP - Número Único de Identificación Personal OD PC - Pasaporte Colombiano PE - Pasaporte Extranjero RC - Registro Civil de Nacimiento TI - Tarjeta de Identidad
+estu_nacionalidad|Nacionalidad
+estu_genero|Género. F - Femenino M - Masculino
+estu_edad|Edad del estudiante
+estu_fechanacimiento|Fecha de Nacimiento [DD/MM/AAAA]
+estu_consecutivo|Id público del estudiante
+fami_educacionpadre|Nivel educativo más alto alcanzado por el padre. Primaria Bachillerato Técnico o Tecnólogo Universitario - Pregrado Universitario - Posgrado NA
+fami_educacionmadre|Nivel educativo más alto alcanzado por la madre. Primaria Bachillerato Técnico o Tecnólogo Universitario - Pregrado Universitario - Posgrado NA
+fami_personashogar|¿Cuántas personas conforman el hogar donde vive actualmente, incluido usted?
+fami_cuartoshogar|En total, ¿en cuántos cuartos duermen las personas de su hogar?
+fami_tieneinternet|¿Su hogar cuenta con servicio o conexión a internet?
+fami_tieneserviciotv|¿Su hogar cuenta con servicio cerrado de televisión?
+fami_tienecomputador|¿Cuáles de los siguientes bienes posee su hogar?: Computador
+fami_tienelavadora|¿Cuáles de los siguientes bienes posee su hogar?: Máquina lavadora de ropa
+fami_tienehornomicroogas|¿Cuáles de los siguientes bienes posee su hogar?: Horno Microondas u Horno eléctrico o gas
+fami_tieneautomovil|¿Cuáles de los siguientes bienes posee su hogar?: Automóvil particular
+fami_tieneconsolavideojuegos|¿Cuáles de los siguientes bienes posee su hogar?: Consola para juegos electrónicos (PlayStation, Xbox, Nintendo, etc.)
+fami_trabajolaborpadre|Aquella labor que sea más similar al trabajo que realizó su padre durante la mayor parte del último año
+fami_trabajolabormadre|Aquella labor que sea más similar al trabajo que realizó su madre durante la mayor parte del último año
+estu_dedicacioninternet|Usualmente, ¿cuánto tiempo al día dedica a navegar en internet? Excluya actividades académicas
+punt_lenguaje|Puntaje del estudiante en lenguaje. Rango [100, 500]
+nivel_desemp_lenguaje|Nivel de desempeño en lenguaje
+punt_matematicas|Puntaje del estudiante en matemáticas. Rango [100, 500]
+nivel_desemp_matematicas|Nivel de desempeño en matemáticas
+cole_cod_dane_establecimiento|Código Dane del establecimiento
+cole_nombre_establecimiento|Nombre del Establecimiento
+cole_genero|Indica el género de la población del establecimiento.
+cole_naturaleza|Indica la naturaleza del establecimiento
+cole_bilingue|Indica si el establecimiento es bilingüe o no
+cole_caracter|Indica el carácter del establecimiento
+cole_cod_dane_sede|Código Dane de la sede
+cole_nombre_sede|Nombre de la Sede
+cole_area_ubicacion|Área de ubicación de la sede
+cole_jornada|Jornada de la sede
+cole_cod_mcpio_ubicacion|Código Dane del municipio donde está ubicada la sede
+cole_mcpio_ubicacion|Nombre del municipio donde está ubicada la sede
+cole_cod_depto_ubicacion|Código Dane del departamento de la sede
+estu_nse_establecimiento|Nombre del departamento donde está ubicada la sede
+estu_grado|Grado del estudiante
+
+
+
+
+
