@@ -1,127 +1,22 @@
 import dash
 import dash_bootstrap_components as dbc
-from dash import html,dcc,dash_table
-import numpy
+from dash import html,dcc
 import plotly.express as px
 from dash.dependencies import Input, Output, State
 import pandas as pd
-import pandasql as ps
 import base64
 import io
 
-# Se utilizan elementos BOOSTRAP, pero al existir la carpeta assets con un archivo css, automáticamente el programa añade y sigue esa hoja de estilos en conjunto con los elementos de BOOSTRAP.
+from vistas import *
+from lectura_archivos import *
+
+# Se utilizan elementos BOOTSTRAP, pero al existir la carpeta assets con un archivo css, automáticamente el programa añade y sigue esa hoja de estilos en conjunto con los elementos de BOOTSTRAP.
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
 app.title = "Kai Saber 5"
-
-'''=================LECTURA DE ARCHIVOS PLANOS================='''
-
-'''--------------Zonas--------------'''
-# Lenguaje
-zonasLen = pd.read_csv('csv/Zonas/Lenguaje_Grado5_2017_Zonas.csv',sep='|',encoding='utf-8',header=0,decimal='.')
-# Matemáticas
-zonasMat = pd.read_csv('csv/Zonas/Matematicas_Grado5_2017_Zonas.csv',sep='|',encoding='utf-8',header=0,decimal='.')
-# Tiene 'Todos los departamentos'. Se usa para generar los dropdowns en Departamentos.
-deptosZonas = pd.read_csv('csv/deptoszonas.csv',sep='|',encoding='utf-8',header=0,usecols=[1,10])
-
-'''--------------Departamentos--------------'''
-# Lenguaje
-deptosLen = pd.read_csv('csv/Departamento/Lenguaje_Grado5_2017_Depto.csv',sep='|',encoding='utf-8',header=0)
-# Matemáticas
-deptosMat = pd.read_csv('csv/Departamento/Matematicas_Grado5_2017_Depto.csv',sep='|',encoding='utf-8',header=0)
-
-'''--------------Entidades territoriales--------------'''
-# Se utiliza para generar el dropdown de entidades territoriales.
-enterritorialesCSV = pd.read_csv('csv/entidadesterritoriales.csv',sep='|',encoding='utf-8',header=0,usecols=[0,1,2,3])
-# Lenguaje
-entLen = pd.read_csv('csv/Entidad Territorial/Lenguaje_Grado5_2017_ETC.csv',sep='|',encoding='utf-8',header=0)
-# Matemáticas
-entMat = pd.read_csv('csv/Entidad Territorial/Matematicas_Grado5_2017_ETC.csv',sep='|',encoding='utf-8',header=0)
-
-'''--------------Municipios--------------'''
-# Lenguaje
-mpioLen = pd.read_csv('csv/Municipios/Lenguaje_Grado5_2017_Municipio.csv',sep='|',encoding='utf-8',header=0,decimal='.')
-# Matemáticas
-mpioMat = pd.read_csv('csv/Municipios/Matematicas_Grado5_2017_Municipio.csv',sep='|',encoding='utf-8',header=0,decimal='.')
-
-'''--------------Establecimientos--------------'''
-# Se utiliza el csv de lenguaje municipios para poder conectar el id del municipio con el departamento y el cod dane del establecimiento
-estMpios = pd.read_csv('csv/Establecimiento/Lenguaje_Grado5_2017_Municipio.csv',sep='|',encoding='utf-8',header=0, decimal=',')
-# Se utiliza para generar el dropdown de Establecimientos.
-estInfo = pd.read_csv('csv/Establecimiento/Información_Complementaria_2017_EE.csv',sep='|',encoding='utf-8',header=0)
-# Lenguaje
-estLen = pd.read_csv('csv/Establecimiento/Lenguaje_Grado5_2017_EE_Completo.csv',sep='|',encoding='utf-8',header=0)
-# Matemáticas
-estMat = pd.read_csv('csv/Establecimiento/Matematicas_Grado5_2017_EE_Completo.csv',sep='|',encoding='utf-8',header=0)
-
-'''--------------Sede--------------'''
-# Se utiliza para generar los dropdown de Sede.
-sedeInfo = pd.read_csv('csv/Sede/Información_Complementaria_2017_Sede.csv',sep='|',encoding='utf-8',header=0)
-# Lenguaje
-sedeLen = pd.read_csv('csv/Sede/Lenguaje_Grado5_2017_Sede.csv',sep='|',encoding='utf-8',header=0)
-# Matemáticas
-sedeMat =pd.read_csv('csv/Sede/Matematicas_Grado5_2017_Sede.csv',sep='|',encoding='utf-8',header=0)
-
-'''--------------Valores Plausibles--------------'''
-valPlauColumnas = pd.read_csv('csv/Valores Plausibles/ValoresPlausibles_Grado5_2017_prueba.csv',sep='|',encoding='utf-8',header=0,nrows=100)
-
-valPlauCompleto = pd.read_csv('csv/Valores Plausibles/ValoresPlausibles_Grado5_2017.csv',sep='|',encoding='utf-8',header=0)
-
-'''=================VARIABLES PARA DROPDOWNS================='''
-#Dp de zonas en departamentos
-consultaSQL = """SELECT DISTINCT ZONA FROM deptosZonas """
-zonas = ps.sqldf(consultaSQL, locals())
-zonasdropdown = [{'label': zonas['ZONA'][i], 'value': zonas['ZONA'][i]} for i in zonas.index]
-
-#Dp de departamentos en departamentos
-consultaSQL = """SELECT DISTINCT DEPARTAMENTO FROM deptosZonas """
-deptos = ps.sqldf(consultaSQL, locals())
-deptosdropdown = [{'label': deptos['DEPARTAMENTO'][i], 'value': deptos['DEPARTAMENTO'][i]} for i in deptos.index]
-
-#Dp de zonas en zonas (es diferente porque este tiene 'Todas las zonas', el anterior tiene 'Todos los departamentos')
-consultaSQL = """SELECT DISTINCT ZONA FROM zonasLen """
-zonaszonas = ps.sqldf(consultaSQL, locals())
-zonaszonasdropdown = [{'label': zonaszonas['ZONA'][i], 'value': zonaszonas['ZONA'][i]} for i in zonaszonas.index]
-
-#Dp de Entidades territoriales
-consultaSQL = """SELECT DISTINCT ENTIDAD FROM enterritorialesCSV """
-enterritoriales = ps.sqldf(consultaSQL, locals())
-entdropdown = [{'label': enterritoriales['ENTIDAD'][i], 'value': enterritoriales['ENTIDAD'][i]} for i in enterritoriales.index]
-#Dp de Tipo de entidades territoriales
-tipoentdropdown=[    
-                {'label':'Todas las entidades territoriales', 'value': '-1'},
-                {'label':'Departamento', 'value': '0'},
-                {'label':'Etc', 'value': '1'},
-                {'label':'Municipio', 'value': '2'}]
-                
-#Dp de departamentos en Municipios (el dp de departamentos en municipios es el mismo que el de departamentos)
-mpioLenCopy = mpioLen[['DEPA_NOMBRE']].drop_duplicates()
-deptosdpenmpios = [{'label': mpioLenCopy['DEPA_NOMBRE'][i], 'value': mpioLenCopy['DEPA_NOMBRE'][i]} for i in mpioLenCopy.index]
-
-#Dp de departamentos en 'Establecimiento'
-estMpiosCopy = estMpios[['DEPA_NOMBRE']].drop_duplicates()
-estDeptosDropdown = [{'label': estMpiosCopy['DEPA_NOMBRE'][i], 'value': estMpiosCopy['DEPA_NOMBRE'][i]} for i in estMpiosCopy.index]
-
-#Dp de tipos de Establecimientos educativos
-estInfoCopy = estInfo[['COD_DANE','MUNI_ID','NOMBRE']]
-# estdropdown = [{'label': estInfoCopy['NOMBRE'][i], 'value': estInfoCopy['COD_DANE'][i]} for i in estInfoCopy.index]
-
-#Dp de jornadas en Sedes
-jrndasdropdown=[
-                {'label':'Mañana', 'value': 'M'},
-                {'label':'Tarde', 'value': 'T'},
-                {'label':'Completa', 'value': 'C'}]
-
-#Dp de establecimientos en sedes
-sedesTotal = pd.merge(sedeLen,sedeInfo[['ID_SEDE','COD_DANE','NOMBRE']],on='ID_SEDE',how='inner')
-sedesTotal = pd.merge(sedesTotal,estInfo[['COD_DANE','NOMBRE']],on='COD_DANE',how='inner')
-sedesTotalCopyE = sedesTotal.drop_duplicates('COD_DANE')
-
-#Se mezclan los csv de: sedeLen(tiene id sede), sedeInfo(tiene nombre), estInfo(tiene Mun id)
-sedesJoin = pd.merge(sedeLen,sedeInfo[['ID_SEDE','COD_DANE','NOMBRE']],on='ID_SEDE',how='left')
-sedesCompleto = pd.merge(sedesJoin,estInfo[['COD_DANE','MUNI_ID','NOMBRE']],on='COD_DANE',how='left')
+app.update_title='Cargando...'
 
 '''=================LAYOUT GENERAL================='''
-menu = html.Div(    
+menu = html.Div(
     children= [
         html.Div(className='kai5-header',children=[
             html.Img(id='grias-logo',
@@ -130,7 +25,6 @@ menu = html.Div(
         ]),
         dbc.Nav(
             [
-                #'exact' es igual a active=True -> Cuando el pathName sea igual a href.
                 #'href' es la ruta (url) que va a tener la página.
                 dbc.NavLink("Análisis", href="/",active="exact",class_name='nav-sidebar'),
                 dbc.NavLink("Departamento", href="/departamento",active="exact",class_name='nav-sidebar'),
@@ -178,7 +72,7 @@ def update_contenido_pagina(pathname):
         pathname ([str]): [Url de la página activa]
 
     Returns:
-        [children]: [Contenido a mostrar por cada página]
+        html: [Componente HTML a mostrar por cada página]
     """    
     if pathname == "/": # Refiere al 'Home' o 'Inicio'.
         header =  html.Div(className='header', children=[
@@ -228,7 +122,7 @@ def update_contenido_pagina(pathname):
         ]
     elif pathname == "/departamento":
         
-        # Guarda los datos que se generan en el callback de creación de la tabs.
+        # Guarda los datos que se generan en el callback de creación de la tabs para poder utilizarlo en una tab diferente a Tabla.
         dataDeptos = dcc.Store(id='data-depto', storage_type='local')
 
         header =  html.Div(className='header', children=[
@@ -240,7 +134,7 @@ def update_contenido_pagina(pathname):
                 dbc.Label("Zona"),
                 dcc.Dropdown(
                     id='deptozonas',
-                    options=zonasdropdown,
+                    options=opt_zonas_en_deptos,
                     value='Todos los departamentos',
                     placeholder="Elija una zona..."
                 )
@@ -275,12 +169,12 @@ def update_contenido_pagina(pathname):
             html.Div(className='resultado-pestana', children=[
                 dataDeptos,            
                 formDeptos,
-                inicializarTabs('depto')
+                inicializar_tabs_comp('depto')
             ])
         ])        
     elif pathname == "/zona":
 
-        # Guarda los datos que se generan en el callback de creación de la tabs.
+        # Guarda los datos que se generan en el callback de creación de la tabs para poder utilizarlo en una tab diferente a Tabla.
         dataZona = dcc.Store(id='data-zona', storage_type='local')
 
         header =  html.Div(className='header', children=[
@@ -292,7 +186,7 @@ def update_contenido_pagina(pathname):
                 dbc.Label("Zona"),
                 dcc.Dropdown(
                     id='zonaszonas',
-                    options=zonaszonasdropdown,
+                    options=opt_zonas_en_zonas,
                     value='Todas las zonas',
                     placeholder="Elija una zona..."
                 )
@@ -315,12 +209,12 @@ def update_contenido_pagina(pathname):
             html.Div(className='resultado-pestana', children=[
                 dataZona,            
                 formZonas, 
-                inicializarTabs('zona')
+                inicializar_tabs_comp('zona')
             ])
         ]
     elif pathname == "/entidadter":
 
-        # Guarda los datos que se generan en el callback de creación de la tabs.
+        # Guarda los datos que se generan en el callback de creación de la tabs para poder utilizarlo en una tab diferente a Tabla.
         dataEnt = dcc.Store(id='data-ent', storage_type='local')
 
         header =  html.Div(className='header', children=[
@@ -332,7 +226,7 @@ def update_contenido_pagina(pathname):
                 dbc.Label("Entidad territorial"),
                 dcc.Dropdown(
                     id='entdropdown',
-                    options=entdropdown,
+                    options=opt_ent_territoriales,
                     value='Todas las entidades territoriales',
                     placeholder="Elija una entidad territorial..."
                 )
@@ -344,7 +238,12 @@ def update_contenido_pagina(pathname):
                 dbc.Label("Tipo de entidad territorial"),
                 dcc.Dropdown(
                     id='tipoentdropdown',
-                    options=tipoentdropdown,
+                    options=[
+                        {'label':'Todas las entidades territoriales', 'value': '-1'},
+                        {'label':'Departamento', 'value': '0'},
+                        {'label':'Etc', 'value': '1'},
+                        {'label':'Municipio', 'value': '2'}
+                    ],
                     value='-1',
                     placeholder="Elija una el tipo de entidad territorial..."
                 )
@@ -369,12 +268,12 @@ def update_contenido_pagina(pathname):
             html.Div(className='resultado-pestana', children=[
                 dataEnt,            
                 formEnt,            
-                inicializarTabs('ent')
+                inicializar_tabs_comp('ent')
             ])
         ]
     elif pathname == "/municipio":
 
-        # Guarda los datos que se generan en el callback de creación de la tabs.
+        # Guarda los datos que se generan en el callback de creación de la tabs para poder utilizarlo en una tab diferente a Tabla.
         dataEnt = dcc.Store(id='data-mpio', storage_type='local')
 
         header =  html.Div(className='header', children=[
@@ -386,7 +285,7 @@ def update_contenido_pagina(pathname):
                 dbc.Label("Departamento"),
                 dcc.Dropdown(
                     id='mpioddepto',
-                    options=deptosdpenmpios,
+                    options=opt_deptos_en_mpios,
                     value='Todos los municipios',
                     placeholder="Elija un departamento..."
                 )
@@ -421,12 +320,12 @@ def update_contenido_pagina(pathname):
             html.Div(className='resultado-pestana', children=[
                 dataEnt,            
                 formMpios,
-                inicializarTabs('mpio')
+                inicializar_tabs_comp('mpio')
             ])
         ]
     elif pathname == "/establecimiento":
 
-        # Guarda los datos que se generan en el callback de creación de la tabs.
+        # Guarda los datos que se generan en el callback de creación de la tabs para poder utilizarlo en una tab diferente a Tabla.
         dataEst = dcc.Store(id='data-est', storage_type='local')
 
         header =  html.Div(className='header', children=[
@@ -438,8 +337,8 @@ def update_contenido_pagina(pathname):
                 dbc.Label("Departamento"),
                 dcc.Dropdown(
                     id='estdepto',
-                    options=estDeptosDropdown,
-                    value='Antioquia',
+                    options=opt_deptos_en_est,
+                    value='Amazonas',
                     placeholder="Elija un departamento..."
                 )
             ]
@@ -460,7 +359,8 @@ def update_contenido_pagina(pathname):
                 dbc.Label("Establecimiento"),
                 dcc.Dropdown(
                     id='estestablmtos',            
-                    placeholder="Elija un establecimiento..."
+                    placeholder="Elija un establecimiento...",
+                    optionHeight=50
                 )
             ]
         )
@@ -489,11 +389,11 @@ def update_contenido_pagina(pathname):
             html.Div(className='resultado-pestana', children=[
                 dataEst,            
                 formEst,
-                inicializarTabs('est')
+                inicializar_tabs_comp('est')
             ])
         ]
     elif pathname == "/sede":
-        # Guarda los datos que se generan en el callback de creación de la tabs.
+        # Guarda los datos que se generan en el callback de creación de la tabs para poder utilizarlo en una tab diferente a Tabla.
         dataSede= dcc.Store(id='data-sede', storage_type='local')
 
         header =  html.Div(className='header', children=[
@@ -505,8 +405,8 @@ def update_contenido_pagina(pathname):
                 dbc.Label("Departamento"),
                 dcc.Dropdown(
                     id='estdepto',
-                    options=estDeptosDropdown,
-                    value='Antioquia',
+                    options=opt_deptos_en_est,
+                    value='Amazonas',
                     placeholder="Elija un departamento..."
                 )
             ]
@@ -527,7 +427,8 @@ def update_contenido_pagina(pathname):
                 dbc.Label("Establecimiento"),
                 dcc.Dropdown(
                     id='estestablmtos',           
-                    placeholder="Elija un establecimiento..."
+                    placeholder="Elija un establecimiento...",
+                    optionHeight=50
                 )
             ]
         )
@@ -537,7 +438,8 @@ def update_contenido_pagina(pathname):
                 dbc.Label("Sede"),
                 dcc.Dropdown(
                     id='sedesede',            
-                    placeholder="Elija un establecimiento..."
+                    placeholder="Elija un establecimiento...",
+                    optionHeight=50
                 )
             ]
         )
@@ -582,23 +484,22 @@ def update_contenido_pagina(pathname):
             html.Div(className='resultado-pestana', children=[
                 dataSede,            
                 formSede,
-                inicializarTabs('sede')
+                inicializar_tabs_comp('sede')
             ])
         ]
     elif pathname == "/valplausibles":  
 
         header =  html.Div(className='header', children=[
             html.H1(children='Valores plausibles'),
-        ])
-        
+        ])        
         
         estdeptoDropdown = html.Div(
             children=[
                 dbc.Label("Departamento"),
                 dcc.Dropdown(
                     id='estdepto',
-                    options=estDeptosDropdown,
-                    value='Antioquia',
+                    options=opt_deptos_en_est,
+                    value='Amazonas',
                     placeholder="Elija un departamento..."
                 )
             ]
@@ -619,7 +520,8 @@ def update_contenido_pagina(pathname):
                 dbc.Label("Establecimiento"),
                 dcc.Dropdown(
                     id='estestablmtos',            
-                    placeholder="Elija un establecimiento..."
+                    placeholder="Elija un establecimiento...",
+                    optionHeight=50
                 )
             ]
         )
@@ -650,15 +552,79 @@ def update_contenido_pagina(pathname):
                 html.Div(id='contenedor-valplau',children=[])
             ])
         ]
-    elif pathname == "/estudiantes":  
-
+    elif pathname == "/estudiantes":         
         header =  html.Div(className='header', children=[
             html.H1(children='Estudiantes'),
         ])
+
+        sedeDeptoDropdown = html.Div(
+            children=[
+                dbc.Label("Departamento"),
+                dcc.Dropdown(
+                    id='estdepto',
+                    options=opt_deptos_en_est,
+                    value='Amazonas',
+                    placeholder="Elija un departamento..."
+                )
+            ]
+        ) 
+
+        sedeMpioDropdown = html.Div(
+            children=[
+                dbc.Label("Municipio"),
+                dcc.Dropdown(
+                    id='estmpio',
+                    placeholder="Elija un municipio..."
+                )
+            ]
+        ) 
+
+        sedeEstDropdown = html.Div(
+            children=[
+                dbc.Label("Establecimiento"),
+                dcc.Dropdown(
+                    id='estestablmtos',           
+                    placeholder="Elija un establecimiento...",
+                    optionHeight=50
+                )
+            ]
+        )
+
+        sedeSedeDropdown = html.Div(
+            children=[
+                dbc.Label("Sede"),
+                dcc.Dropdown(
+                    id='sedesede',            
+                    placeholder="Elija un establecimiento...",
+                    optionHeight=50
+                )
+            ]
+        )
+        
+        formSede = dbc.Form(
+            children=[
+                dbc.Row(
+                    children=[
+                        dbc.Col(children=[sedeDeptoDropdown],width=6),
+                        dbc.Col(children=[sedeMpioDropdown],width=6)
+                    ]
+                ),
+                dbc.Row(
+                    children=[
+                        dbc.Col(children=[sedeEstDropdown],width=6),
+                        dbc.Col(children=[sedeSedeDropdown],width=6),
+                    ],
+                    class_name='another-row'
+                )                 
+            ],
+            class_name='form-dropdowns'
+        )
+
         return [
             header,
-            html.Div(className='resultado-pestana', children=[
-                
+            html.Div(className='resultado-pestana', children=[ 
+                formSede,
+                inicializar_tabs_estudiantes()
             ])
         ]
     # Si se intenta acceder a url que no existe, se muestra un mensaje de error.
@@ -669,202 +635,6 @@ def update_contenido_pagina(pathname):
             html.P(f"The pathname {pathname} was not recognised..."),
         ]
     )
-
-
-'''=================FUNCIONES GENERALES================='''
-def cargar_docs_toDict(filename):
-    docsDict = {}
-    archivo = open(filename,encoding='utf-8')
-    for linea in archivo: 
-        key, value = linea.strip().split('|')
-        docsDict[key] = value
-    return docsDict
-
-def inicializarTabs(pseudo_id):
-
-    # Tabs que contiene la tabla y los gráficos.
-    tabsVistas = dbc.Card(
-        children=[
-            dbc.CardHeader(
-                children=[
-                    dbc.Tabs(
-                        [
-                            dbc.Tab(
-                                label="Tabla",
-                                tab_id='tab-tabla-{}'.format(pseudo_id),
-                                tab_class_name ='tab',
-                                active_tab_class_name = 'active-tab'
-                            ),
-                            dbc.Tab(
-                                label="Gráfico",
-                                tab_id='tab-grafico-{}'.format(pseudo_id),
-                                tab_class_name ='tab',
-                                active_tab_class_name = 'active-tab'
-                            ),
-                        ],
-                        id='tabs-vistas-{}'.format(pseudo_id),
-                        active_tab='tab-tabla-{}'.format(pseudo_id)
-                    )
-                ]
-            ),
-            dbc.CardBody(
-                html.Div(id='content-tabs-vistas-{}'.format(pseudo_id))
-            )
-        ]
-    )
-
-    # Tabs que filtra por compentencia y tiene adentro a tabsVistas
-    tabsComp = dbc.Card(
-        children=[
-            dbc.CardHeader(
-                children=[
-                    dbc.Tabs(
-                        [
-                            dbc.Tab(label="Lenguaje", tab_id='tab-len-{}'.format(pseudo_id), tab_class_name ='tab'),
-                            dbc.Tab(label="Matemáticas", tab_id='tab-mat-{}'.format(pseudo_id), tab_class_name ='tab'),
-                            dbc.Tab(label="Ciencias naturales", tab_id='tab-nat-{}'.format(pseudo_id), disabled=True, tab_class_name ='tab'),
-                            dbc.Tab(label="Competencias ciudadanas", tab_id='tab-ciu-{}'.format(pseudo_id), disabled=True, tab_class_name ='tab'),
-                        ],
-                        id='tabs-comp-{}'.format(pseudo_id),
-                        active_tab='tab-len-{}'.format(pseudo_id),
-                    )
-                ]
-            ),
-            dbc.CardBody(
-                html.Div(id='content-tabs-comp-{}'.format(pseudo_id), children=tabsVistas)
-            )
-        ]
-    )
-
-
-    # tabsComp = html.Div(id='div-tabs-comp',children=[
-    #     dbc.Tabs(
-    #         [
-    #             dbc.Tab(label="Lenguaje", tab_id='tab-len-{}'.format(pseudo_id)),
-    #             dbc.Tab(label="Matemáticas", tab_id='tab-mat-{}'.format(pseudo_id)),
-    #             dbc.Tab(label="Ciencias naturales", tab_id='tab-nat-{}'.format(pseudo_id), disabled=True),
-    #             dbc.Tab(label="Competencias ciudadanas", tab_id='tab-ciu-{}'.format(pseudo_id), disabled=True),
-    #         ],
-    #         id='tabs-comp-{}'.format(pseudo_id),
-    #         active_tab='tab-len-{}'.format(pseudo_id),
-    #     ),
-    #     html.Div(id='content-tabs-comp-{}'.format(pseudo_id), children=tabsVistas),
-    # ])
-
-    return tabsComp    
-
-
-def contenedorSegunTabActiva(valueDropdown,seleccion,tablaData,tabsVistasActiva,idGrafico,docsPath):
-    """[Crea un contenedor con una tabla y su información general o uno con gráficos, dependiendo de la tab activa que reciba como parámetro.]
-
-    Args:
-        valueDropdown ([str]): [Valor para mostrar como título en el panel de Tabla]
-        seleccion ([DataFrame]): [DataFrame con la información de valueDropdown]
-        tablaData ([DataFrame]): [DataFrame con la información a mostrar en la tabla]
-        tabsVistasActiva ([str]): [Nombre de la tab activa en el panel de Vistas]
-        idGrafico ([str]): [Nombre del gráfico a crearse]
-
-    Returns:
-        [html.Div]: [Contenedor a mostrarse en el panel de Vistas según la tab activa.]
-    """   
-    contenedor = html.Div([])     
-    if tabsVistasActiva == 'tab-tabla':
-
-        # Calcular cuartil
-        puntaje = int(*seleccion['PUNTAJE_PROMEDIO'].values)
-        if(puntaje<=100):
-            cuartil = "Pésimo (Q1)"
-        elif(puntaje<=200):
-            cuartil = "Malo (Q2)"
-        elif(puntaje<=300):
-            cuartil = "Regular (Q3)"
-        else:
-            cuartil = "Bueno (Q4)"
-
-        
-        # Se crea un div con la información general del dataset y una tabla mostrando su contenido.
-        contenedorTabla = html.Div(
-            children=[
-                html.H2(className='nombre-seleccion',children=valueDropdown),
-                html.Div([
-                    html.P('Número de participantes: ' + str(*seleccion['N'].values)),
-                    html.P('Puntaje promedio: ' + str(*seleccion['PUNTAJE_PROMEDIO'].values)),
-                    html.P('Desviación: ' + str(*seleccion['DESVIACION'].values)),
-                    html.P('Cuartil: ' + cuartil)
-                ]),
-
-                # Creación de la tabla con el dataframe de la competencia escogida.
-                dash_table.DataTable(
-                    id = 'tabla-info',
-                    data=tablaData.to_dict('records'),
-                    columns=[{'name': i, 'id': i,"selectable": True} for i in tablaData.columns],
-                    tooltip_header = cargar_docs_toDict(docsPath),
-                    sort_action="native",
-                    sort_mode="multi",
-                    fixed_rows={'headers': True},
-                    page_size=7, 
-                    style_table = {"borderRadius": "10px", "overflow": "hidden"},
-                    style_cell={
-                        'fontFamily': '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans",sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol","Noto Color Emoji"',
-                        'textAlign': 'left',                        
-                        'padding':'0.75rem',
-                        'border':'none',
-                        'border-bottom':'1px solid rgb(0,0,0,0.1)',
-                        'borderRadius':'1rem',
-                        'minWidth': 300, 'maxWidth': 300, 'width': 300
-                    },
-                    style_header={
-                        'background-color': '#008000',
-                        'color': '#ffffff',
-                        'text-align': 'left',
-                        'borderRadius':'1rem',
-                    }
-                ),
-            ])
-
-        contenedor = contenedorTabla        
-    elif tabsVistasActiva == 'tab-grafico':
-
-        # Se crea el div con el dropdown del tipo de gráfico y el gráfico como componente vacío.
-        contenedorGraficos =html.Div([
-            html.H2(className='nombre-seleccion', children='Gráfico'),
-
-            # Dropdown para elegir el tipo de gráfico
-            dcc.Dropdown(id='dropdown-graficos',
-                options=[
-                    {'label':'Dona', 'value': 'Dona'},
-                    {'label':'Barras', 'value': 'Barras'},
-                    {'label':'Linea', 'value': 'Linea'}],
-                value='Dona',
-            ),
-            dcc.Graph(
-                id=idGrafico,
-                figure={},
-            )
-        ])
-        
-        # Retorna el contenedor correspondiente a la tab seleccionada.
-        contenedor = contenedorGraficos  
-    return contenedor
-
-def generarDataParaGrafico(seleccion):
-    """[Ajusta un DataFrame y lo modifica para cumplir con el formato de la creación de un gráfico. Posteriomente, dicho DataFrame se transforma en un dict para poderse compartir entre callbacks con dcc.Store.]
-
-    Args:
-        seleccion ([DataFrame]): [DataFrame con la información a mostrarse en un gráfico]
-
-    Returns:
-        [dict]: [Diccionario formado a través del DataFrame listo para compartirse entre callbacks]
-    """    
-    
-    dffPorcentajes = seleccion.filter(like="PORCENTAJE").transpose()    
-    dffPorcentajes.reset_index(inplace = True)    
-    dffPorcentajes.rename(columns = {'index':'RENDIMIENTO'}, inplace = True)
-    dffPorcentajes.rename(columns={dffPorcentajes.columns[1]: 'PORCENTAJE'}, inplace = True)
-    dffPorcentajesDict = dffPorcentajes.to_dict('records')
-
-    return dffPorcentajesDict
-
 
 '''=================CALLBACKS EN ANÁLISIS================='''
 @app.callback(Output('output-data-upload', 'children'),
@@ -880,7 +650,7 @@ def update_output(list_of_contents, list_of_names, list_of_sep):
         list_of_sep (list): Separador o separadores configurados
 
     Returns:
-        children: Elemento html que cambia según el archivo cargado en el upload
+        html: Componente HTML que cambia según el archivo cargado en el upload
     """    
     if not list_of_sep:
         list_of_sep = "|"
@@ -892,6 +662,17 @@ def update_output(list_of_contents, list_of_names, list_of_sep):
 
 # Función para lectura de archivos    
 def parse_contents(contents, filename, sepr):
+    """Lee el archivo subido en el componente Upload con un encoding utf-8.
+    Se define una variable global. Si la lectura es exitosa, se inicializa la variable como un DataFame de pandas con los datos del archivo cargado.
+
+    Args:
+        contents (bytes): Archivos subido en el componente Upload
+        filename (str): Nombre de los archivos subidos
+        sepr (str): Caracter del separador del CSV
+
+    Returns:
+        html: HTML Div tipo alerta que informa si se logró cargar el archivo.
+    """    
     content_type, content_string = contents.split(',')
     decoded = base64.b64decode(content_string)
     try:
@@ -905,155 +686,20 @@ def parse_contents(contents, filename, sepr):
             aux = pd.read_excel(io.StringIO(decoded.decode('utf-8')),sep=sepr,na_values='null')
             df = aux
     except Exception as e:
-        print(e)
         return html.Div([
             dbc.Alert("No se pudo cargar el archivo. Revisar separador", color="danger")
         ])
 
-    tablaArchivo = dash_table.DataTable(
-        id = 'datatable-main',
-        data=df.to_dict('records'),
-        columns=[{'name': i, 'id': i,"selectable": True} for i in df.columns],        
-        sort_action="native",
-        sort_mode="multi",
-        page_current= 0,
-        page_size= 7,                   
-        style_table = {
-            "borderRadius": "10px",
-            'overflowY': 'auto',
-            'overflowX': 'auto'
-        },
-        style_cell={
-            'fontFamily': '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans",sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol","Noto Color Emoji"',
-            'textAlign': 'left',                        
-            'padding':'0.75rem',
-            'border':'none',
-            'border-bottom':'1px solid rgb(0,0,0,0.1)',
-            'borderRadius':'1rem',
-            'minWidth': 300, 'maxWidth': 300, 'width': 300
-        },    
-        style_header={
-            'background-color': '#008000',
-            'color': '#ffffff',
-            'text-align': 'left',
-            'borderRadius':'1rem',
-        } 
-    )   
-    analisisAtributo = generarAnalisisAtributos(df)
+    # Tabla que muestra los registros del CSV
+    tablaArchivo = generar_tabla_general(df,'')
+    
+    # Tabla que muestra el listado de atributos
+    analisisAtributo = generar_analisis_atributos(df)
 
     return html.Div([
         tablaArchivo,
         html.H2('Análisis'),
-        analisisAtributo,
-    ])
-
-
-def generarAnalisisAtributos(df):
-    """Genera una tabla de análisis de los atributos de un dataframe.
-
-    Args:
-        df (DataFrame): Dataframe a analizar
-
-    Returns:
-        dash.DataTable: Tabla con el análisis de los atributos
-    """    
-
-    columnas = [
-            {"name":"ATRIBUTO","id":"ATRIBUTO"},
-            {"name":"DISTINTOS","id":"DISTINTOS"},
-            {"name":"COUNT","id":"COUNT"},
-            {"name":"NULOS","id":"NULOS"},
-            {"name":"MODA","id":"MODA"},
-            {"name":"TIPO","id":"TIPO"},
-            {"name":"PROMEDIO","id":"PROMEDIO"},
-            {"name":"MEDIANA","id":"MEDIANA"},
-            {"name":"MAXIMO","id":"MAXIMO"},
-            {"name":"MINIMO","id":"MINIMO"},
-            {"name":"DESVIACION","id":"DESVIACION"}
-        ]
-    atributos = []   
-    for (columnName, columnData) in df.iteritems():
-        nulos = columnData.isnull().sum()
-        moda = columnData.mode(dropna=True)
-        distintos = columnData.nunique()
-        
-        if moda.empty: #Si no hay moda, significa que todos sus valores son Nulos.
-            moda = "-"
-        else:
-            moda = moda[0]
-
-        promedio = "-"
-        mediana = "-"
-        maximo = "-"
-        minimo = "-"
-        desviacion = "-"
-               
-        #Info para valores numéricos
-        tipoDato = columnData.dtypes
-        if tipoDato == numpy.int64 or tipoDato == numpy.float64:
-
-            if columnData.count() != 0: #Verificar que al menos tenga 1 valor 
-                promedio = round(columnData.mean(),2)
-                mediana = round(columnData.median(),2)
-                maximo = round(columnData.max(),2)
-                minimo = round(columnData.min(),2)
-                desviacion = round(columnData.std(),2)       
-        
-        rowAtributo = {
-            "ATRIBUTO":columnName,
-            "DISTINTOS":distintos,
-            "COUNT":columnData.count(),
-            "NULOS":nulos,
-            "MODA":moda,
-            "TIPO":str(columnData.dtype),
-
-            "PROMEDIO": promedio,
-            "MEDIANA": mediana,
-            "MAXIMO": maximo,
-            "MINIMO": minimo,
-            "DESVIACION": desviacion
-        }
-        atributos.append(rowAtributo)
-  
-    tablaAtributo = dash_table.DataTable(
-            id = 'datatable-atributo',
-            data=atributos,
-            columns=columnas,
-            row_selectable="single",   
-            selected_rows=[0],
-            sort_action="native",
-            sort_mode="multi",
-            page_action='native',
-            page_size= 7,
-            fixed_rows={'headers': True},
-            style_as_list_view=True,
-            style_table = {
-            "borderRadius": "10px",
-            'overflowY': 'auto',
-            'overflowX': 'auto'
-            },
-            style_cell={
-                'fontFamily': '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans",sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol","Noto Color Emoji"',
-                'textAlign': 'left',
-                'padding':'0.75rem',
-                'border':'none',
-                'border-bottom':'1px solid rgb(0,0,0,0.1)',
-                'borderRadius':'1rem',
-                'minWidth': 300, 'maxWidth': 300, 'width': 300
-            },    
-            style_header={
-                'background-color': '#352b2b',
-                'color': '#ffffff',
-                'text-align': 'left',
-                'borderRadius':'1rem',
-            }
-        )
-    
-    return html.Div([
-        tablaAtributo,
-        html.Br(),
-        html.P('Seleccione un atributo en la tabla de análisis. Solo es válido para atributos hasta con 10 valores únicos.'),
-        dcc.Graph(id='grafico-atributo'),
+        analisisAtributo
     ])
 
 @app.callback(
@@ -1061,16 +707,26 @@ def generarAnalisisAtributos(df):
     [Input('datatable-atributo','selected_rows'),
     Input('datatable-atributo','data')]
 )
-def actualizarGraficoAtributo(lista_atributos_selected,dataTablaAtributo):
+def actualizarGraficoAtributo(atributo_analisis,dataTablaAtributo):
+    """Actualiza el gráfico de análisis de atributos dependiendo del atributo seleccionado en la tabla. Solamente permite analizar si el atributo tiene 10 o menos valores distintos.
 
+    Args:
+        atributo_analisis (list): Lista de atributos seleccionados
+        dataTablaAtributo (DataFrame): Datos(dcc.Store) del atributo seleccionado.
+
+    Returns:
+        px.bar: Gráfico de barras con la información de los valores del atributo seleccionado.
+    """
     # Se apunta al atributo seleccionado en la primera posición de la lista de atributos seleccionados, y después se filtra el dataframe del archivo subido con dicho atributo seleccionado.
-    dictAtributoSelected = dataTablaAtributo[lista_atributos_selected[0]]    
-    # atributoSeleccionado refiere a la columna del dataframe grande del archivo subido
+    dictAtributoSelected = dataTablaAtributo[atributo_analisis[0]] 
+
+    # Se obtiene el dataframe del atributo selecconado
     atributoSeleccionado = df[dictAtributoSelected['ATRIBUTO']]
     
     # Muestra los valores unicos con su respectivo count
     dffAtributoGrafico = atributoSeleccionado.value_counts()
 
+    # Se prepara el dataframe para graficarlo
     dffAtributoGrafico = dffAtributoGrafico.to_frame()
     dffAtributoGrafico.reset_index(inplace = True) 
     dffAtributoGrafico.rename(columns = {'index':'VALOR'}, inplace = True)
@@ -1093,31 +749,31 @@ def actualizarGraficoAtributo(lista_atributos_selected,dataTablaAtributo):
     Output(component_id='deptodepto', component_property='options'),
     [Input(component_id='deptozonas', component_property='value')]
 )
-def update_deptodepto(zona_seleccionada):
+def update_deptodepto(zona_seleccionada):   
     """Actualiza el dropdown de departamentos en 'Departamento' dependiendo de la zona seleccionada.
 
     Args:
-        zona_seleccionada ([str]): [Valor elegido en el dropdown de zonas en 'Departamento']
+        zona_seleccionada (str): Valor del dropdown de la zona escogida en 'Departamento'
 
     Returns:
-        [list of dict]: [Departamentos de la zona seleccionada]
+        list of dict: [Departamentos de la zona seleccionada]
     """    
     deptosZonasCopy = deptosZonas[deptosZonas['ZONA']==zona_seleccionada]
     deptosdropdown = [{'label': deptosZonasCopy['DEPARTAMENTO'][i], 'value': deptosZonasCopy['DEPARTAMENTO'][i]} for i in deptosZonasCopy.index]
     return deptosdropdown
-    
+
 @app.callback(
     Output('deptodepto', 'value'),
     [Input('deptodepto', 'options')]
 )
 def update_dp(deptodepto_options):
-    """Selecciona el primer Departamento en el dropdown de departamentos en 'Departamento' después de que este fuese actualizado.
+    """Selecciona el primer valor del dropdown de departamentos en 'Departamento' después de que este fuese actualizado.
 
     Args:
-        deptodepto_options ([type]): [description]
+        deptodepto_options (list of dict): Opciones del dropdown de departamentos en 'Departamento'
 
     Returns:
-        [str]: [Primer departamento del dropdown de departamentos en 'Departamento']
+        str: Valor de la primera opción del dropdown de departamentos en 'Departamento'
     """    
     return deptodepto_options[0]['value']
  
@@ -1129,16 +785,16 @@ def update_dp(deptodepto_options):
     Input('tabs-vistas-depto','active_tab')]
  )
 def actualizar_info_depto(deptodepto,tabsCompActiva,tabsVistasActiva):
-    """Actualiza el contenido del tabs vistas dependiendo de si se elige tabla o gráficos y dependiendo de si se eligió Lenguaje o Matemáticas.
+    """Actualiza el contenido del tabs vistas dependiendo de si se elige tabla o gráfico y dependiendo de si se eligió Lenguaje o Matemáticas.
 
     Args:
-        deptodepto ([str]): [Valor del dropdown de departamentos]
-        tabsCompActiva ([str]): [Id de la tab de competencias activa]
-        tabsVistasActiva ([str]): [Id del la tab de vistas activa]
+        deptodepto (str): [Valor del dropdown de departamentos]
+        tabsCompActiva (str): [Id de la tab de competencias activa]
+        tabsVistasActiva (str): [Id del la tab de vistas activa]
 
     Returns:
-        [dict]: [Diccionario con los datos del departamento seleccionado]
-        [htmldiv]: [Contenedor con el children de la tab activa]
+        dict: [Datos(dcc.Store) del departamento seleccionado]
+        html: [Componente HTML con el contenido de las tabs seleccionadas]
     """    
     #Copia de los dataframes dependiendo de la competencia elegida.
     if tabsCompActiva == "tab-len-depto":
@@ -1149,20 +805,17 @@ def actualizar_info_depto(deptodepto,tabsCompActiva,tabsVistasActiva):
     # Filtra según el departamento escogido
     seleccion = dffCompetencia[dffCompetencia['DEPARTAMENTO']==deptodepto] 
 
-    # Si se elige todos los departamentos, en la tabla se muestran todos los departamentos.
+    # Si se elige 'Todos los departamentos', en la tabla se muestran todos los departamentos.
     if 'Todos los departamentos'==deptodepto:
-        tablaData = dffCompetencia
-    else:
-        tablaData = seleccion
-
-    # Crea el contenedor que se va a enviar según la tab activa
-    if tabsVistasActiva == 'tab-tabla-depto':
-        contenedorOutput = contenedorSegunTabActiva(deptodepto,seleccion,tablaData,'tab-tabla','grafico-depto','csv/Departamento/deptosdocs.txt')
-    elif tabsVistasActiva == 'tab-grafico-depto':
-        contenedorOutput = contenedorSegunTabActiva(deptodepto,seleccion,tablaData,'tab-grafico','grafico-depto','')   
+        df_tabla = dffCompetencia
+    else: #Si no, se muestra la seleccion por departamento
+        df_tabla = seleccion
+    
+    # Crea el contenedor que se va a enviar según la tab activa    
+    contenedorOutput = generar_cont_tab_activa(tabsVistasActiva,deptodepto,seleccion,df_tabla,'csv/Departamento/deptosdocs.txt','grafico-depto')
 
     # Genera un dict que será enviado al callback de actualizar gráfico a través del Output de dcc.Store
-    dataGrafico = generarDataParaGrafico(seleccion)
+    dataGrafico = generar_data_grafico_dinamico(seleccion)
     
     return dataGrafico,contenedorOutput
   
@@ -1175,40 +828,13 @@ def actualizar_grafico_depto(tipoGrafico,dataDeptos):
     """Actualiza el gráfico de la Tab, dependiendo del tipo de gráfico que se haya seleccionado en el dropdown. Recibe el dict necesario para crear la figura a través del input del dcc.Store
 
     Args:
-        tipoGrafico ([str]): [Valor del dropdown del tipo de gráfico]
-        dataDeptos ([dict]): [Diccionario con la información del departamento seleccionado]
+        tipoGrafico (str): Valor del dropdown de tipo de gráfico
+        dataDeptos (dict): Datos(dcc.Store) del departamento seleccionado
 
     Returns:
-        [htmldiv]: [Contenedor del gráfico a mostrar en la tab de gráfico]
+        px.figure: Gráfico con la información seleccionada
     """    
-    # Se convierte el dict recibido en un DataFrame para cumplir el formato de la creación de gráficos.
-    dffPorcentajes = pd.DataFrame.from_dict(dataDeptos)   
-
-    if tipoGrafico == 'Barras':
-        figure = px.bar(
-            data_frame=dffPorcentajes,      
-            x = 'RENDIMIENTO',
-            y = 'PORCENTAJE',
-            color='RENDIMIENTO' #Indica qué eje tendrá sus barras coloreadas.
-        )
-        # figure.update_layout(showlegend=False) #Esconder el label de X
-        figure.update_xaxes(visible=False) #Esconder los valores de X
-    
-    elif tipoGrafico == 'Dona':
-        figure = px.pie(
-            data_frame=dffPorcentajes,
-            names ='RENDIMIENTO',
-            values = 'PORCENTAJE',
-            hole=.3
-        )
-    else:
-        figure = px.line(
-            data_frame=dffPorcentajes,
-            x = 'RENDIMIENTO',
-            y = 'PORCENTAJE',
-        )
-    
-    return figure
+    return generar_grafico_puntajes(dataDeptos,tipoGrafico)
 
 '''=================CALLBACKS EN ZONA================='''
 
@@ -1223,13 +849,13 @@ def actualizar_info_zona(zonaszonas,tabsCompActiva,tabsVistasActiva):
     """Actualiza el contenido del tabs vistas dependiendo de si se elige tabla o gráficos y dependiendo de si se eligió Lenguaje o Matemáticas.
 
     Args:
-        zonaszonas ([str]): [Valor del dropdown de zonas en 'Zona']
-        tabsCompActiva ([str]): [Id de la tab de competencias activa]
-        tabsVistasActiva ([str]): [Id del la tab de vistas activa]
+        zonaszonas (str): Valor del dropdown de zonas en 'Zona'
+        tabsCompActiva (str): Id de la tab de competencias activa
+        tabsVistasActiva (str): Id del la tab de vistas activa
 
     Returns:
-        [dict]: [Diccionario con los datos del departamento seleccionado]
-        [htmldiv]: [Contenedor con el children de la tab activa]
+        dict: Datos(dcc.Store) del departamento seleccionado
+        html: Contenedor HTML con el contenido de las tabs seleccionadas
     """    
 
     #Copia de los dataframes dependiendo de la competencia elegida.
@@ -1241,20 +867,17 @@ def actualizar_info_zona(zonaszonas,tabsCompActiva,tabsVistasActiva):
     # Filtra según el departamento escogido
     seleccion = dffCompetencia[dffCompetencia['ZONA']==zonaszonas] 
 
-    # Si se elige todos los departamentos, en la tabla se muestran todos los departamentos.
+    # Si se elige 'Todas las zonas', en la tabla se muestran todas las zonas
     if 'Todas las zonas'==zonaszonas:
-        tablaData = dffCompetencia
+        df_tabla = dffCompetencia
     else:
-        tablaData = seleccion
+        df_tabla = seleccion
     
-    # Crea el contenedor que se va a enviar según la tab activa
-    if tabsVistasActiva == 'tab-tabla-zona':
-        contenedorOutput = contenedorSegunTabActiva(zonaszonas,seleccion,tablaData,'tab-tabla','grafico-zona','csv/Zonas/zonasdocs.txt')
-    elif tabsVistasActiva == 'tab-grafico-zona':
-        contenedorOutput = contenedorSegunTabActiva(zonaszonas,seleccion,tablaData,'tab-grafico','grafico-zona','')    
+    # Crea el contenedor que se va a retornar según la tab activa    
+    contenedorOutput = generar_cont_tab_activa(tabsVistasActiva,zonaszonas,seleccion,df_tabla,'csv/Zonas/zonasdocs.txt','grafico-zona') 
 
     # Genera un dict que será enviado al callback de actualizar gráfico a través del Output de dcc.Store
-    dataGrafico = generarDataParaGrafico(seleccion)
+    dataGrafico = generar_data_grafico_dinamico(seleccion)
     
     return dataGrafico,contenedorOutput
           
@@ -1263,43 +886,19 @@ def actualizar_info_zona(zonaszonas,tabsCompActiva,tabsVistasActiva):
     [Input('dropdown-graficos','value'),
     Input('data-zona','data')]
 )
-def actualizar_grafico_zona(tipoGrafico,dataDeptos):
-    """Actualiza el gráfico de la Tab, dependiendo del tipo de gráfico que se haya seleccionado en el dropdown. Recibe el dict necesario para crear la figura a través del input del dcc.Store
+def actualizar_grafico_zona(tipoGrafico,dataZona):
+    """Actualiza el gráfico de la tab, dependiendo del tipo de gráfico que se haya seleccionado en el dropdown. Recibe el dict necesario para crear la figura a través del input del dcc.Store
 
     Args:
-        tipoGrafico ([str]): [Valor del dropdown del tipo de gráfico]
-        dataDeptos ([type]): [Diccionario con la información de la zona seleccionada]
+        tipoGrafico (str): Valor del dropdown del tipo de gráfico
+        dataDeptos (type): Datos(dcc.Store) con la información de la zona seleccionada
 
     Returns:
-        [htmldiv]: [Contenedor del gráfico a mostrar en la tab de gráfico]
+        html: Contenedor HTML con el gráfico a mostrar
     """    
-    # Se convierte el dict recibido en un DataFrame para cumplir el formato de la creación de gráficos.
-    dffPorcentajes = pd.DataFrame.from_dict(dataDeptos)   
 
-    if tipoGrafico == 'Barras':
-        figure = px.bar(
-            data_frame=dffPorcentajes,      
-            x = 'RENDIMIENTO',
-            y = 'PORCENTAJE',
-            color='RENDIMIENTO' #Indica qué eje tendrá sus barras coloreadas.
-        )
-        figure.update_xaxes(visible=False) #Esconder los valores de X
-    
-    elif tipoGrafico == 'Dona':
-        figure = px.pie(
-            data_frame=dffPorcentajes,
-            names ='RENDIMIENTO',
-            values = 'PORCENTAJE',
-            hole=.3
-        )
-    else:
-        figure = px.line(
-            data_frame=dffPorcentajes,
-            x = 'RENDIMIENTO',
-            y = 'PORCENTAJE',
-        )
-    
-    return figure
+    return generar_grafico_puntajes(dataZona,tipoGrafico)
+
 
 
 '''=================CALLBACKS EN ENTIDAD TERRITORIAL================='''
@@ -1308,17 +907,19 @@ def actualizar_grafico_zona(tipoGrafico,dataDeptos):
     [Input('tipoentdropdown', 'value')]
 )
 def update_entdropdown(tipoent_seleccionada):
-    """Actualiza el dropdown de entidades territoriales en dependiendo del tipo seleccionado.
+    """Actualiza el dropdown de entidades territoriales en dependiendo del tipo de entidad seleccionada
 
     Args:
-        tipoent_seleccionada ([str]): [Valor elegido en el dropdown de tipo de entidades territoriales] 
+        tipoent_seleccionada (str): Valor elegido en el dropdown de tipo de entidades territoriales
 
     Returns:
-        [list of dict]: [Entidades territoriales del tipo seleccionado]
+        list of dict: Entidades territoriales del tipo de entidad sseleccionado
     """ 
 
+    # Se filtra por tipo de entidad
     enterritorialesCSVCopy = enterritorialesCSV[enterritorialesCSV['TIPO']==int(tipoent_seleccionada)]
 
+    # Se crean las opcions del dropdown a mostrarse
     entDp = [{'label': enterritorialesCSVCopy['ENTIDAD'][i], 'value': enterritorialesCSVCopy['ENTIDAD'][i]} for i in enterritorialesCSVCopy.index]
     
     return entDp
@@ -1331,10 +932,10 @@ def update_dp(entdropdown_options):
     """Selecciona la primer entidad territorial según el tipo seleccionado, después de que este fuese actualizado.
 
     Args:
-        entdropdown_options ([list of dicts]): [Lista nombres de entidades territoriales]
+        entdropdown_options (list of dicts): Lista de opciones del dropdown de entidades territoriales
 
     Returns:
-        [str]: [Primer entidad territorial del dropdown actualizado]
+        str: Valor de la primera opción del dropdown de entidades territoriales
     """    
     return entdropdown_options[0]['value']
 
@@ -1347,16 +948,16 @@ def update_dp(entdropdown_options):
     Input('tabs-vistas-ent','active_tab')]
  )
 def actualizar_info_ent(etdropdownvalue,tabsCompActiva,tabsVistasActiva):
-    """Actualiza el contenido del tabs vistas dependiendo de si se elige tabla o gráficos y dependiendo de si se eligió Lenguaje o Matemáticas.
+    """Actualiza el contenido del tabs vistas dependiendo de si se elige tabla o gráfico y dependiendo de si se eligió Lenguaje o Matemáticas.
 
     Args:
-        entdropdown ([str]): [Valor del dropdown de entidad territorial]
-        tabsCompActiva ([str]): [Id de la tab de competencias activa]
-        tabsVistasActiva ([str]): [Id del la tab de vistas activa]
+        etdropdownvalue (str): Valor del dropdown de entidad territorial
+        tabsCompActiva (str): Id de la tab de competencias activa
+        tabsVistasActiva (str): Id del la tab de vistas activa
 
     Returns:
-        [dict]: [Diccionario con los datos de la entidad territorial seleccionado]
-        [htmldiv]: [Contenedor con el children de la tab activa]
+        dict:Diccionario con los datos de la entidad territorial seleccionado
+        html: Contenedor HTML con el children de la tab activa
     """    
 
     #Copia de los dataframes dependiendo de la competencia elegida.
@@ -1370,18 +971,15 @@ def actualizar_info_ent(etdropdownvalue,tabsCompActiva,tabsVistasActiva):
 
     # Si se elige todos los departamentos, en la tabla se muestran todos los departamentos.
     if 'Todas las entidades territoriales'==etdropdownvalue:
-        tablaData = dffCompetencia
+        df_tabla = dffCompetencia
     else:
-        tablaData = seleccion
+        df_tabla = seleccion
     
     # Crea el contenedor que se va a enviar según la tab activa
-    if tabsVistasActiva == 'tab-tabla-ent':
-        contenedorOutput = contenedorSegunTabActiva(etdropdownvalue,seleccion,tablaData,'tab-tabla','grafico-ent','csv/Entidad Territorial/entdocs.txt')
-    elif tabsVistasActiva == 'tab-grafico-ent':
-        contenedorOutput = contenedorSegunTabActiva(etdropdownvalue,seleccion,tablaData,'tab-grafico','grafico-ent','')
+    contenedorOutput = generar_cont_tab_activa(tabsVistasActiva,etdropdownvalue,seleccion,df_tabla,'csv/Entidad Territorial/entdocs.txt','grafico-ent') 
 
     # Genera un dict que será enviado al callback de actualizar gráfico a través del Output de dcc.Store
-    dataGrafico = generarDataParaGrafico(seleccion)
+    dataGrafico = generar_data_grafico_dinamico(seleccion)
     
     return dataGrafico,contenedorOutput
           
@@ -1394,39 +992,15 @@ def actualizar_grafico_ent(tipoGrafico,dataEnt):
     """Actualiza el gráfico de la Tab, dependiendo del tipo de gráfico que se haya seleccionado en el dropdown. Recibe el dict necesario para crear la figura a través del input del dcc.Store
 
     Args:
-        tipoGrafico ([str]): [Valor del dropdown del tipo de gráfico]
-        dataEnt ([type]): [Diccionario con la información de la entidad territorial seleccionada]
+        tipoGrafico (str): Valor del dropdown del tipo de gráfico
+        dataEnt (dict): Diccionario con la información de la entidad territorial seleccionada
 
     Returns:
-        [htmldiv]: [Contenedor del gráfico a mostrar en la tab de gráfico]
+        html: Contenedor HTML del gráfico a mostrar en la tab de gráfico
     """    
-    # Se convierte el dict recibido en un DataFrame para cumplir el formato de la creación de gráficos.
-    dffPorcentajes = pd.DataFrame.from_dict(dataEnt)   
 
-    if tipoGrafico == 'Barras':
-        figure = px.bar(
-            data_frame=dffPorcentajes,      
-            x = 'RENDIMIENTO',
-            y = 'PORCENTAJE',
-            color='RENDIMIENTO' #Indica qué eje tendrá sus barras coloreadas.
-        )
-        figure.update_xaxes(visible=False) #Esconder los valores de X
-    
-    elif tipoGrafico == 'Dona':
-        figure = px.pie(
-            data_frame=dffPorcentajes,
-            names ='RENDIMIENTO',
-            values = 'PORCENTAJE',
-            hole=.3
-        )
-    else:
-        figure = px.line(
-            data_frame=dffPorcentajes,
-            x = 'RENDIMIENTO',
-            y = 'PORCENTAJE',
-        )
-    
-    return figure
+    return generar_grafico_puntajes(dataEnt,tipoGrafico)
+
 
 
 '''=================CALLBACKS EN MUNICIPIOS================='''
@@ -1438,10 +1012,10 @@ def update_deptodepto(depto_seleccionado):
     """Actualiza el dropdown de municipios en dependiendo del departamento seleccionado.
 
     Args:
-        depto_seleccionado ([str]): [Valor elegido en el dropdown de departamentos en 'Municipio']
+        depto_seleccionado (str): Valor elegido en el dropdown de departamentos en 'Municipio'
 
     Returns:
-        [list of dict]: [Departamentos de la zona seleccionada]
+        list of dict: Departamentos de la zona seleccionada
     """
     mpioLenCopy = mpioLen[mpioLen['DEPA_NOMBRE']==depto_seleccionado]
     mpiosdropdown = [{'label': mpioLenCopy['MUNI_NOMBRE'][i], 'value': mpioLenCopy['MUNI_ID'][i]} for i in mpioLenCopy.index]
@@ -1452,13 +1026,13 @@ def update_deptodepto(depto_seleccionado):
     [Input('mpioddmpio', 'options')]
 )
 def update_dp(mpioddmpio_options):
-    """Selecciona el primer municipio en el dropdown de municipios después de que este fuese actualizado.
+    """Selecciona el primer municipio en el dropdown de municipios después de ser actualizado
 
     Args:
-        mpioddmpio_options ([list of dicts]): [Lista de las opciones del dropdown de municipios]
+        mpioddmpio_options (list of dicts): Lista de las opciones del dropdown de municipios
 
     Returns:
-        [str]: [Primer municipio del dropdown de municipios actualizado']
+        str: Valor del primer municipio en el dropdown de Municipios
     """    
     return mpioddmpio_options[0]['value']
 
@@ -1470,16 +1044,16 @@ def update_dp(mpioddmpio_options):
     Input('tabs-vistas-mpio','active_tab')]
  )
 def actualizar_info_mpio(mpioddmpiovalue,tabsCompActiva,tabsVistasActiva):
-    """Actualiza el contenido del tabs vistas dependiendo de si se elige tabla o gráficos y dependiendo de si se eligió Lenguaje o Matemáticas.
+    """Actualiza el contenido del tabs vistas dependiendo de si se elige tabla o gráfico y dependiendo de si se eligió Lenguaje o Matemáticas.
 
     Args:
-        mpioddmpiovalue ([str]): [Valor del dropdown de municipios en 'Municipio']       
-        tabsCompActiva ([str]): [Id de la tab de competencias activa]
-        tabsVistasActiva ([str]): [Id del la tab de vistas activa]
+        mpioddmpiovalue (str): Valor del dropdown de municipios en 'Municipio'      
+        tabsCompActiva (str): Id de la tab de competencias activa
+        tabsVistasActiva (str): Id del la tab de vistas activa
 
     Returns:
-        [dict]: [Diccionario con los datos del municipio seleccionado]
-        [htmldiv]: [Contenedor con el children de la tab activa]
+        dict: Diccionario con los datos del municipio seleccionado
+        html: Contenedor HTML con el children de la tab activa
     """    
 
     #Copia de los dataframes dependiendo de la competencia elegida.
@@ -1492,20 +1066,17 @@ def actualizar_info_mpio(mpioddmpiovalue,tabsCompActiva,tabsVistasActiva):
     # Se manejó con ids porque hay algunos municipios que tienen el mismo nombre(pero de diferente departamento) y lo único que los diferencia es el id.
     seleccion = dffCompetencia[dffCompetencia['MUNI_ID']==mpioddmpiovalue]
     
-    # Es 0 porque ese es el id de Todos los municipios.
+    # 0 es el id de 'Todos los municipios'.
     if 0==mpioddmpiovalue:
-        tablaData = dffCompetencia
+        df_tabla = dffCompetencia
     else:
-        tablaData = seleccion
+        df_tabla = seleccion
     
     # Crea el contenedor que se va a enviar según la tab activa
-    if tabsVistasActiva == 'tab-tabla-mpio':
-        contenedorOutput = contenedorSegunTabActiva(seleccion['MUNI_NOMBRE'],seleccion,tablaData,'tab-tabla','grafico-mpio','csv/Municipios/mpiosdocs.txt')
-    elif tabsVistasActiva == 'tab-grafico-mpio':
-        contenedorOutput = contenedorSegunTabActiva(mpioddmpiovalue,seleccion,tablaData,'tab-grafico','grafico-mpio','')
+    contenedorOutput = generar_cont_tab_activa(tabsVistasActiva,seleccion['MUNI_NOMBRE'],seleccion,df_tabla,'csv/Municipios/mpiosdocs.txt','grafico-mpio')
 
     # Genera un dict que será enviado al callback de actualizar gráfico a través del Output de dcc.Store
-    dataGrafico = generarDataParaGrafico(seleccion)
+    dataGrafico = generar_data_grafico_dinamico(seleccion)
     
     return dataGrafico,contenedorOutput
           
@@ -1518,40 +1089,14 @@ def actualizar_grafico_mpio(tipoGrafico,dataMpio):
     """Actualiza el gráfico de la Tab, dependiendo del tipo de gráfico que se haya seleccionado en el dropdown. Recibe el dict necesario para crear la figura a través del input del dcc.Store
 
     Args:
-        tipoGrafico ([str]): [Valor del dropdown del tipo de gráfico]
-        dataEnt ([type]): [Diccionario con la información de la entidad territorial seleccionada]
+        tipoGrafico (str): Valor del dropdown del tipo de gráfico
+        dataMpio (dict): Diccionario con la información del municipio seleccionado
 
     Returns:
-        [htmldiv]: [Contenedor del gráfico a mostrar en la tab de gráfico]
+        html: Contenedor HTML del gráfico a mostrar en la tab de gráfico
     """    
-    # Se convierte el dict recibido en un DataFrame para cumplir el formato de la creación de gráficos.
-    dffPorcentajes = pd.DataFrame.from_dict(dataMpio)   
 
-    if tipoGrafico == 'Barras':
-        figure = px.bar(
-            data_frame=dffPorcentajes,      
-            x = 'RENDIMIENTO',
-            y = 'PORCENTAJE',
-            color='RENDIMIENTO' #Indica qué eje tendrá sus barras coloreadas.
-        )
-        figure.update_xaxes(visible=False) #Esconder los valores de X
-    
-    elif tipoGrafico == 'Dona':
-        figure = px.pie(
-            data_frame=dffPorcentajes,
-            names ='RENDIMIENTO',
-            values = 'PORCENTAJE',
-            hole=.3
-        )
-    else:
-        figure = px.line(
-            data_frame=dffPorcentajes,
-            x = 'RENDIMIENTO',
-            y = 'PORCENTAJE',
-        )
-    
-    return figure
-
+    return generar_grafico_puntajes(dataMpio,tipoGrafico)
 
 
 '''=================CALLBACKS EN ESTABLECIMIENTO================='''
@@ -1560,13 +1105,13 @@ def actualizar_grafico_mpio(tipoGrafico,dataMpio):
     [Input('estdepto', 'value')]
 )
 def update_estmpio(estdeptovalue):
-    """Actualiza el dropdown de municipios en dependiendo del departamento seleccionado.
+    """Actualiza el dropdown de municipios dependiendo del departamento seleccionado
 
     Args:
-        depto_seleccionado ([str]): [Valor elegido en el dropdown de departamentos en 'Municipio']
+        estdeptovalue (str): Valor del municipio escogido en el dropdown de departamentos en 'Municipio'
 
     Returns:
-        [list of dict]: [Departamentos de la zona seleccionada]
+        list of dict: Lista de municipios del departamento seleccionado
     """
     estMpiosCopy = estMpios[estMpios['DEPA_NOMBRE']==estdeptovalue]
     estmpiosDropdown = [{'label': estMpiosCopy['MUNI_NOMBRE'][i], 'value': estMpiosCopy['MUNI_ID'][i]} for i in estMpiosCopy.index]
@@ -1577,13 +1122,13 @@ def update_estmpio(estdeptovalue):
     [Input('estmpio', 'options')]
 )
 def update_dp(estmpio_options):
-    """Selecciona el primer municipio en el dropdown de municipios después de que este fuese actualizado.
+    """Selecciona el primer municipio en el dropdown de municipios al ser actualizado
 
     Args:
-        mpioddmpio_options ([list of dicts]): [Lista de las opciones del dropdown de municipios]
+        estmpio_options (list of dicts): Lista de las opciones del dropdown de municipios
 
     Returns:
-        [str]: [Primer municipio del dropdown de municipios actualizado']
+        str: Valor del primer municipio en el dropdown de Municipios
     """    
     return estmpio_options[0]['value']
 
@@ -1592,8 +1137,16 @@ def update_dp(estmpio_options):
     [Input('estmpio','value')]
 )
 def actualizar_dpestablecimientos(estmpio_value):
-    estInfoCopy2 = estInfo[estInfo['MUNI_ID']==estmpio_value]
-    estDropdown = [{'label': estInfoCopy2['NOMBRE'][i], 'value': estInfoCopy2['COD_DANE'][i]} for i in estInfoCopy2.index]
+    """Actualiza el dropdown de establecimientos según el municipio seleccionado
+
+    Args:
+        estmpio_value (str): Valor del municipio seleccionado
+
+    Returns:
+        list of dict: Lista de establecimientos en el municipio seleccionado
+    """    
+    estInfoCopy = estInfo[estInfo['MUNI_ID']==estmpio_value]
+    estDropdown = [{'label': estInfoCopy['NOMBRE'][i], 'value': estInfoCopy['COD_DANE'][i]} for i in estInfoCopy.index]
 
     return estDropdown
 
@@ -1601,7 +1154,16 @@ def actualizar_dpestablecimientos(estmpio_value):
     Output('estestablmtos', 'value'),
     [Input('estestablmtos', 'options')])
 def update_dp(estestablmtos_options):
-    return estestablmtos_options[0]['value']
+    """"Selecciona la primera opción del dropdown de establecimientos
+    al ser actualizado.
+
+    Args:
+        estestablmtos_options (list of dicts): Lista de opciones del dropdown de establecimientos
+
+    Returns:
+        str: Valor de la primera opción del dropdown de establecimientos
+    """    
+    return estestablmtos_options[1]['value']
 
 
 @app.callback(
@@ -1615,13 +1177,13 @@ def actualizar_info_est(estestablmtos_value,tabsCompActiva,tabsVistasActiva):
     """Actualiza el contenido del tabs vistas dependiendo de si se elige tabla o gráficos y dependiendo de si se eligió Lenguaje o Matemáticas.
 
     Args:
-        mpioddmpiovalue ([str]): [Valor del dropdown de municipios en 'Municipio']       
-        tabsCompActiva ([str]): [Id de la tab de competencias activa]
-        tabsVistasActiva ([str]): [Id del la tab de vistas activa]
+        estestablmtos_value (str): Valor del establecimiento escogido
+        tabsCompActiva (str): Id de la tab de competencias activa
+        tabsVistasActiva (str): Id del la tab de vistas activa
 
     Returns:
-        [dict]: [Diccionario con los datos del municipio seleccionado]
-        [htmldiv]: [Contenedor con el children de la tab activa]
+        dict: Diccionario con los datos del establecimiento escogido
+        html: Contenedor HTML con el children de la tab activa
     """        
 
     #Copia de los dataframes dependiendo de la competencia elegida.
@@ -1639,98 +1201,12 @@ def actualizar_info_est(estestablmtos_value,tabsCompActiva,tabsVistasActiva):
     if seleccion.empty:
         return {},html.Div([dbc.Alert("No se registran datos para este establecimiento", color="danger")])
     
-    # Devuelve un contenedor dependiendo de la competencia seleccionada
-    if tabsVistasActiva == 'tab-tabla-est':
+    # Crea el contenedor que se va a enviar según la tab activa
+    contenedorOutput = generar_cont_tab_activa(tabsVistasActiva,nombre['NOMBRE'],seleccion,seleccion,'csv/Establecimiento/estdocs.txt','grafico-est')
 
-        # Calcular cuartil
-        puntaje = int(*seleccion['PROMEDIO'].values)
-        if(puntaje<=100):
-            cuartil = "Pésimo (Q1)"
-        elif(puntaje<=200):
-            cuartil = "Malo (Q2)"
-        elif(puntaje<=300):
-            cuartil = "Regular (Q3)"
-        else:
-            cuartil = "Bueno (Q4)"
+    data_grafico = generar_data_grafico_dinamico(seleccion,False)
     
-        # Se crea un div con la información general del dataset y una tabla mostrando su contenido.
-        contenedorTabla = html.Div([
-            html.H2(className='nombre-seleccion',children=nombre['NOMBRE']),
-            html.Div([
-                html.Hr(),
-                html.P('Número de participantes: ' + str(*seleccion['PARTICIPANTES'].values)),
-                html.P('Puntaje promedio: ' + str(*seleccion['PROMEDIO'].values)),
-                html.P('Desviación: ' + str(*seleccion['DESVIACION'].values)),
-                html.P('Cuartil: ' + cuartil)
-            ]),
-
-            # Creación de la tabla con el dataframe de la competencia escogida.
-            
-            dash_table.DataTable(
-                id = 'tabla-info',
-                data=seleccion.to_dict('records'),
-                columns=[{'name': i, 'id': i,"selectable": True} for i in seleccion.columns],
-                tooltip_header = cargar_docs_toDict('csv/Establecimiento/estdocs.txt'),
-                sort_action="native",
-                sort_mode="multi",
-                fixed_rows={'headers': True},
-                page_size=7, 
-                style_table = {
-                "borderRadius": "10px",
-                'overflowY': 'auto',
-                'overflowX': 'auto'
-                },
-                style_cell={
-                    'fontFamily': '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans",sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol","Noto Color Emoji"',
-                    'textAlign': 'left',
-                    'padding':'0.75rem',
-                    'border':'none',
-                    'border-bottom':'1px solid rgb(0,0,0,0.1)',
-                    'borderRadius':'1rem',
-                    'minWidth': 300, 'maxWidth': 300, 'width': 300
-                },    
-                style_header={
-                    'background-color': '#008000',
-                    'color': '#ffffff',
-                    'text-align': 'left',
-                    'borderRadius':'1rem'
-                }                
-            ),
-        ])
-
-        contenedor = contenedorTabla        
-    elif tabsVistasActiva == 'tab-grafico-est':
-
-        # Se crea el div con el dropdown del tipo de gráfico y el gráfico como componente vacío.
-        contenedorGraficos =html.Div([
-            html.H2(className='nombre-seleccion',children='Gráfico'),
-
-            # Dropdown para elegir el tipo de gráfico
-            dcc.Dropdown(id='dropdown-graficos',
-                options=[
-                    {'label':'Dona', 'value': 'Dona'},
-                    {'label':'Barras', 'value': 'Barras'},
-                    {'label':'Linea', 'value': 'Linea'}],
-                value='Dona',
-            ),
-            dcc.Graph(
-                id='grafico-est',
-                figure={},
-            )
-        ])
-        
-        # Retorna el contenedor correspondiente a la tab seleccionada.
-        contenedor = contenedorGraficos  
-      
-    # Genera un dict que será enviado al callback de actualizar gráfico a través del Output de dcc.Store
-    dffPorcentajes = seleccion.filter(["INSUFICIENTE","MINIMO","SATISFACTORIO","AVANZADO"]).transpose()    
-    dffPorcentajes.reset_index(inplace = True)    
-    dffPorcentajes.rename(columns = {'index':'RENDIMIENTO'}, inplace = True)
-    dffPorcentajes.rename(columns={dffPorcentajes.columns[1]: 'PORCENTAJE'}, inplace = True)   
-
-    dataGrafico = dffPorcentajes.to_dict('records')
-    
-    return dataGrafico,contenedor
+    return data_grafico,contenedorOutput
           
 @app.callback(
     Output('grafico-est','figure'),
@@ -1741,39 +1217,14 @@ def actualizar_grafico_est(tipoGrafico,dataEst):
     """Actualiza el gráfico de la Tab, dependiendo del tipo de gráfico que se haya seleccionado en el dropdown. Recibe el dict necesario para crear la figura a través del input del dcc.Store
 
     Args:
-        tipoGrafico ([str]): [Valor del dropdown del tipo de gráfico]
-        dataEnt ([type]): [Diccionario con la información de la entidad territorial seleccionada]
+        tipoGrafico (str): Valor del dropdown del tipo de gráfico
+        dataEnt (type): Diccionario con la información del establecimiento seleccionado
 
     Returns:
-        [htmldiv]: [Contenedor del gráfico a mostrar en la tab de gráfico]
+        html: Contenedor HTML del gráfico a mostrar en la tab de gráfico
     """    
-    # Se convierte el dict recibido en un DataFrame para cumplir el formato de la creación de gráficos.
-    dffPorcentajes = pd.DataFrame.from_dict(dataEst)   
+    return generar_grafico_puntajes(dataEst,tipoGrafico)
 
-    if tipoGrafico == 'Barras':
-        figure = px.bar(
-            data_frame=dffPorcentajes,      
-            x = 'RENDIMIENTO',
-            y = 'PORCENTAJE',
-            color='RENDIMIENTO' #Indica qué eje tendrá sus barras coloreadas.
-        )
-        figure.update_xaxes(visible=False) #Esconder los valores de X
-    
-    elif tipoGrafico == 'Dona':
-        figure = px.pie(
-            data_frame=dffPorcentajes,
-            names ='RENDIMIENTO',
-            values = 'PORCENTAJE',
-            hole=.3
-        )
-    else:
-        figure = px.line(
-            data_frame=dffPorcentajes,
-            x = 'RENDIMIENTO',
-            y = 'PORCENTAJE',
-        )
-    
-    return figure
 
 
 '''=================CALLBACKS EN SEDE================='''
@@ -1783,6 +1234,14 @@ def actualizar_grafico_est(tipoGrafico,dataEst):
     [Input('estestablmtos', 'value')]
 )
 def actualizar_sede(sedeest_value):
+    """Actualiza el dropdown de sedes según el establecimiento escogido.
+
+    Args:
+        sedeest_value (str ): Valor del establecimiento escogido
+
+    Returns:
+        list of dict: Lista de sedes según el establecimiento escogido 
+    """
 
     # Se filtra las sedes según el establecimiento escogido y se elimina duplicados porque en el archivo existen las mismas sedes con diferentes jornadas. El atributo que identifica a una sede sin importar su jornada es CODIGO_DANE_SEDE
     sedesCompletoCopy = sedesCompleto[sedesCompleto['COD_DANE']==sedeest_value].drop_duplicates('CODIGO_DANE_SEDE')
@@ -1797,6 +1256,14 @@ def actualizar_sede(sedeest_value):
     [Input('sedesede','value')]
 )
 def actualizar_jornadas(sedesede_value):
+    """Actualiza el dropdown de jornadas dependiendo de la sede escogida. El dropdown tiene 3 posibles opciones: Completa, Mañana y Tarde.
+
+    Args:
+        sedesede_value (str): Valor de la sede escogida
+
+    Returns:
+        list of dict: Lista de jornadas que tiene la sede escogida
+    """    
 
     sedeLenCopy = sedeLen[sedeLen['CODIGO_DANE_SEDE']==sedesede_value]
 
@@ -1817,6 +1284,14 @@ def actualizar_jornadas(sedesede_value):
     [Input('sedesede','options')]
 )
 def update_dp(sedesede_options):
+    """Selecciona la primera sede en el dropdown de sedes después de ser actualizado.
+
+    Args:
+        sedesede_options (list of dict): Lista de sedes en el dropdown de sedes
+
+    Returns:
+        str: Valor de la primera sede en el dropdown de sedes
+    """    
     if sedesede_options != []:
         return sedesede_options[0]['value']
 
@@ -1825,6 +1300,14 @@ def update_dp(sedesede_options):
     [Input('sedejrnadas','options')]
 )
 def update_dp(sedejrnadas_options):
+    """Selecciona la primera jornada en el dropdown de jornadas después de ser actualizado.
+
+    Args:
+        sedejrnadas_options (list of dict): Lista de jornada en el dropdown de jornadas
+
+    Returns:
+        str: Valor de la primera jornada en el dropdown de jornadas
+    """     
     if sedejrnadas_options != []:    
         return sedejrnadas_options[0]['value']
     
@@ -1840,13 +1323,13 @@ def actualizar_info_est(sedejrnadas_value,tabsCompActiva,tabsVistasActiva):
     """Actualiza el contenido del tabs vistas dependiendo de si se elige tabla o gráficos y dependiendo de si se eligió Lenguaje o Matemáticas.
 
     Args:
-        mpioddmpiovalue ([str]): [Valor del dropdown de municipios en 'Municipio']       
-        tabsCompActiva ([str]): [Id de la tab de competencias activa]
-        tabsVistasActiva ([str]): [Id del la tab de vistas activa]
+        sedejrnadas_value (str): Valor de la jornada escogida
+        tabsCompActiva (str): Id de la tab de competencias activa
+        tabsVistasActiva (str): Id del la tab de vistas activa
 
     Returns:
-        [dict]: [Diccionario con los datos del municipio seleccionado]
-        [htmldiv]: [Contenedor con el children de la tab activa]
+        dict: Diccionario con los datos del jornada seleccionada
+        html: Contenedor HTML con el children de la tab activa
     """        
 
     #Copia de los dataframes dependiendo de la competencia elegida.
@@ -1855,7 +1338,6 @@ def actualizar_info_est(sedejrnadas_value,tabsCompActiva,tabsVistasActiva):
     elif tabsCompActiva == "tab-mat-sede":
         dffCompetencia = sedeMat
 
-    # Se manejó con COD_DANE porque los archivos de competencias solo se pueden conectar por ese atributo
     seleccion = dffCompetencia[dffCompetencia['ID_SEDE']==sedejrnadas_value]
 
     nombre = sedesCompleto[sedesCompleto['ID_SEDE']==sedejrnadas_value]
@@ -1863,128 +1345,31 @@ def actualizar_info_est(sedejrnadas_value,tabsCompActiva,tabsVistasActiva):
     # Si el establecimiento no presentó la prueba
     if seleccion.empty:
         return {},html.Div([dbc.Alert("No se registran datos para este establecimiento", color="danger")])
-    
-    # Devuelve un contenedor dependiendo de la competencia seleccionada
-    if tabsVistasActiva == 'tab-tabla-sede':
-    
-        # Se crea un div con la información general del dataset y una tabla mostrando su contenido.
-        contenedorTabla = html.Div([
-            html.H2(className='nombre-seleccion',children=nombre['NOMBRE_x']),
-            html.Div([
-                html.Hr(),
-                html.P('Número de participantes: ' + str(*seleccion['PARTICIPANTES'].values)),
-                html.P('Número de evaluados: ' + str(*seleccion['EVALUADOS'].values))
-            ]),
 
-            # Creación de la tabla con el dataframe de la competencia escogida.
-            dash_table.DataTable(
-                id = 'tabla-info',
-                data=seleccion.to_dict('records'),
-                columns=[{'name': i, 'id': i,"selectable": True} for i in seleccion.columns],
-                tooltip_header = cargar_docs_toDict('csv/Sede/sedesdocs.txt'),
-                sort_action="native",
-                sort_mode="multi",
-                fixed_rows={'headers': True},
-                page_size=7, 
-                style_table = {
-                "borderRadius": "10px",
-                'overflowY': 'auto',
-                'overflowX': 'auto'
-                },
-                style_cell={
-                    'fontFamily': '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans",sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol","Noto Color Emoji"',
-                    'textAlign': 'left',
-                    'padding':'0.75rem',
-                    'border':'none',
-                    'border-bottom':'1px solid rgb(0,0,0,0.1)',
-                    'borderRadius':'1rem',
-                    'minWidth': 300, 'maxWidth': 300, 'width': 300
-                },    
-                style_header={
-                    'background-color': '#008000',
-                    'color': '#ffffff',
-                    'text-align': 'left',
-                    'borderRadius':'1rem'
-                }
-            ),
-        ])
-
-        contenedor = contenedorTabla        
-    elif tabsVistasActiva == 'tab-grafico-sede':
-
-        # Se crea el div con el dropdown del tipo de gráfico y el gráfico como componente vacío.
-        contenedorGraficos =html.Div([
-            html.H2(className='nombre-seleccion', children='Gráfico'),
-
-            # Dropdown para elegir el tipo de gráfico
-            dcc.Dropdown(id='dropdown-graficos',
-                options=[
-                    {'label':'Dona', 'value': 'Dona'},
-                    {'label':'Barras', 'value': 'Barras'},
-                    {'label':'Linea', 'value': 'Linea'}],
-                value='Dona',
-            ),
-            dcc.Graph(
-                id='grafico-sede',
-                figure={},
-            )
-        ])
-        
-        # Retorna el contenedor correspondiente a la tab seleccionada.
-        contenedor = contenedorGraficos  
-      
-    # Genera un dict que será enviado al callback de actualizar gráfico a través del Output de dcc.Store
-    dffPorcentajes = seleccion.filter(["INSUFICIENTE","MINIMO","SATISFACTORIO","AVANZADO"]).transpose()    
-    dffPorcentajes.reset_index(inplace = True)    
-    dffPorcentajes.rename(columns = {'index':'RENDIMIENTO'}, inplace = True)
-    dffPorcentajes.rename(columns={dffPorcentajes.columns[1]: 'NUMERO DE ESTUDIANTES'}, inplace = True)   
-
-    dataGrafico = dffPorcentajes.to_dict('records')
-    
-    return dataGrafico,contenedor
+    # Crea el contenedor que se va a enviar según la tab activa
+    contenedorOutput = generar_cont_tab_activa(tabsVistasActiva,nombre['NOMBRE_x'],seleccion,seleccion,'csv/Sede/sedesdocs.txt','grafico-sede')
           
+    data_grafico = generar_data_grafico_dinamico(seleccion,False)
+    
+    return data_grafico,contenedorOutput
+
 @app.callback(
     Output('grafico-sede','figure'),
     [Input('dropdown-graficos','value'),
     Input('data-sede','data')]
 )
-def actualizar_grafico_est(tipoGrafico,dataEst):
+def actualizar_grafico_sede(tipoGrafico,dataSede):
     """Actualiza el gráfico de la Tab, dependiendo del tipo de gráfico que se haya seleccionado en el dropdown. Recibe el dict necesario para crear la figura a través del input del dcc.Store
 
     Args:
-        tipoGrafico ([str]): [Valor del dropdown del tipo de gráfico]
-        dataEnt ([type]): [Diccionario con la información de la entidad territorial seleccionada]
+        tipoGrafico (str): Valor del dropdown del tipo de gráfico
+        dataEnt (type): Diccionario con la información de la sede seleccionada
 
     Returns:
-        [htmldiv]: [Contenedor del gráfico a mostrar en la tab de gráfico]
+        dict: Diccionario con los datos de la sede seleccionada
+        html: Contenedor HTML con el children de la tab activa
     """    
-    # Se convierte el dict recibido en un DataFrame para cumplir el formato de la creación de gráficos.
-    dffPorcentajes = pd.DataFrame.from_dict(dataEst)   
-
-    if tipoGrafico == 'Barras':
-        figure = px.bar(
-            data_frame=dffPorcentajes,      
-            x = 'RENDIMIENTO',
-            y = 'NUMERO DE ESTUDIANTES',
-            color='RENDIMIENTO' #Indica qué eje tendrá sus barras coloreadas.
-        )
-        figure.update_xaxes(visible=False) #Esconder los valores de X
-    
-    elif tipoGrafico == 'Dona':
-        figure = px.pie(
-            data_frame=dffPorcentajes,
-            names ='RENDIMIENTO',
-            values = 'NUMERO DE ESTUDIANTES',
-            hole=.3
-        )
-    else:
-        figure = px.line(
-            data_frame=dffPorcentajes,
-            x = 'RENDIMIENTO',
-            y = 'NUMERO DE ESTUDIANTES',
-        )
-    
-    return figure
+    return generar_grafico_puntajes(dataSede,tipoGrafico)
 
 
 @app.callback(
@@ -1992,49 +1377,56 @@ def actualizar_grafico_est(tipoGrafico,dataEst):
     [Input('estestablmtos', 'value')]
 )
 def generarTablaValPlau(est_seleccionado):
+    """Actualiza la tabla de Valores Plausibles dependiendo del establecimiento seleccionado
+
+    Args:
+        est_seleccionado (str): Valor del establecimiento seleccionado
+
+    Returns:
+        html: Contenedor con la información de los valores plausibles del establecimiento seleccionado
+    """    
 
     seleccion = valPlauCompleto[valPlauCompleto['COD_DANE']==est_seleccionado]
 
     if seleccion.empty:
         return {},html.Div([dbc.Alert("No se registran datos para este establecimiento", color="danger")])
 
-    tablaValPlau = dash_table.DataTable(
-        id='valplautable',
-        columns= [
-            {"name": i, "id": i}
-            for i in valPlauCompleto.columns
-        ],
-        tooltip_header= cargar_docs_toDict('csv/Valores Plausibles/valplaudocs.txt'),
-        data= seleccion.to_dict('records'),
-        filter_action= "native",
-        sort_action="native",   
-        page_size=7,
-        style_data={
-            'whitespace':'normal',
-        },
-        style_table = {
-        'borderRadius': '10px',
-        'overflowY': 'auto',
-        'overflowX': 'auto',
-        },
-        style_cell={
-            'fontFamily': '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans",sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol","Noto Color Emoji"',
-            'textAlign': 'left',
-            'padding':'0.75rem',
-            'border':'none',
-            'border-bottom':'1px solid rgb(0,0,0,0.1)',
-            'borderRadius':'1rem',
-            'minWidth': 300, 'maxWidth': 300, 'width': 300
-        },    
-        style_header={
-            'background-color': '#008000',
-            'color': '#ffffff',
-            'text-align': 'left',
-            'borderRadius':'1rem'
-        }
-    )
-    return [tablaValPlau]
+    tablaValPlau = generar_tabla_general(seleccion,'csv/Valores Plausibles/valplaudocs.txt')
+    
+    return tablaValPlau
 
+@app.callback(
+    Output('content-tabs-estudiantes','children'),
+    [Input('tabs-estudiantes','active_tab'),
+    Input('sedesede','value')]
+ )
+def actualizar_info_estudiantes(componente,sede_seleccionada):
+    """Actualiza la tab de Estudiantes según los componentes elegidos (Académico, Institucional o Socioeconómico) y el filtro por sede.
+
+    Args:
+        componente (str): Valor del componente escogido como tab activa
+        sede_seleccionada (str): Valor de la sede escogida
+
+    Returns:
+        hmtl:  Contenedor HTML con la información por tab de los valores escogidos
+    """  
+
+    if componente == 'tab-acad':
+        seleccion = estudiantesAcad[estudiantesAcad['cole_cod_dane_sede']==sede_seleccionada]
+    elif componente == 'tab-instu': 
+        seleccion = estudiantesInstu[estudiantesInstu['cole_cod_dane_sede']==sede_seleccionada]
+    else:
+        seleccion = estudiantesSocio[estudiantesSocio['cole_cod_dane_sede']==sede_seleccionada]
+
+    # Si no hay datos para mostrar.
+    if seleccion.empty:
+        return {},html.Div([dbc.Alert("No se registran datos para este establecimiento", color="danger")])
+
+    # Crea el contenedor que se va a enviar según la tab activa
+    contenedorOutput = generar_tabla_general(seleccion,'csv/Estudiantes/estudiantesdocs.txt')
+        
+    return contenedorOutput
+    
 if __name__=='__main__':        
     app.config.suppress_callback_exceptions = True
     # app.enable_dev_tools(
