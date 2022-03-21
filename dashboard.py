@@ -26,7 +26,7 @@ menu = html.Div(
         dbc.Nav(
             [
                 #'href' es la ruta (url) que va a tener la página.
-                dbc.NavLink("Análisis", href="/",active="exact",class_name='nav-sidebar'),
+                dbc.NavLink("Dashboard", href="/",active="exact",class_name='nav-sidebar'),                
                 dbc.NavLink("Departamento", href="/departamento",active="exact",class_name='nav-sidebar'),
                 dbc.NavLink("Zona", href="/zona",active="exact",class_name='nav-sidebar'),
                 dbc.NavLink("Municipio", href="/municipio",active="exact",class_name='nav-sidebar'),
@@ -34,7 +34,8 @@ menu = html.Div(
                 dbc.NavLink("Establecimiento", href="/establecimiento",active="exact",class_name='nav-sidebar'),
                 dbc.NavLink("Sede", href="/sede",active="exact",class_name='nav-sidebar'),
                 dbc.NavLink("Valores plausibles", href="/valplausibles",active="exact",class_name='nav-sidebar'),     
-                dbc.NavLink("Estudiantes", href="/estudiantes",active="exact",class_name='nav-sidebar')           
+                dbc.NavLink("Estudiantes", href="/estudiantes",active="exact",class_name='nav-sidebar'),
+                dbc.NavLink("Análisis", href="/analisis",active="exact",class_name='nav-sidebar')
             ],
             vertical=True,
             pills=True,  
@@ -74,52 +75,116 @@ def update_contenido_pagina(pathname):
     Returns:
         html: [Componente HTML a mostrar por cada página]
     """    
-    if pathname == "/": # Refiere al 'Home' o 'Inicio'.
+    if pathname == "/": #Es la primera página que se abre al abrir el dashboard.
         header =  html.Div(className='header', children=[
-            html.H1(children='Análisis de datos'),
+            html.H1(children='KAI SABER 5')
         ])
 
-        inputSeparador = html.Div(
+        cardBodyDeptos = dbc.CardBody(
             [
-                dbc.Label("Separador"),
-                dbc.Input(
-                    id='txfsep',
-                    placeholder="Por defecto es '|'",
-                    type="text",
-                    size=22
+                html.H5("Departamento", className="card-title"),
+                # html.P("Departamentos filtrados por zona"),
+                dbc.CardLink("Ir", href="/departamento",className="link-ir")
+            ]
+        )
+        cardBodyZona = dbc.CardBody(
+            [
+                html.H5("Zona", className="card-title"),
+                # html.P("Departamentos filtrados por zona"),
+                dbc.CardLink("Ir", href="/zona",className="link-ir")
+            ]
+        )
+        cardBodyMpio = dbc.CardBody(
+            [
+                html.H5("Municipio", className="card-title"),
+                # html.P("Departamentos filtrados por zona"),
+                dbc.CardLink("Ir", href="/municipio",className="link-ir")
+            ]
+        )
+        cardBodyEnt = dbc.CardBody(
+            [
+                html.H5("Entidad territorial", className="card-title"),
+                # html.P("Departamentos filtrados por zona"),
+                dbc.CardLink("Ir", href="/entidadter",className="link-ir")
+            ]
+        )
+        cardBodyEst = dbc.CardBody(
+            [
+                html.H5("Establecimiento", className="card-title"),
+                # html.P("Departamentos filtrados por zona"),
+                dbc.CardLink("Ir", href="/establecimiento",className="link-ir")
+            ]
+        )
+        cardBodySede = dbc.CardBody(
+            [
+                html.H5("Sede", className="card-title"),
+                # html.P("Departamentos filtrados por zona"),
+                dbc.CardLink("Ir", href="/sede",className="link-ir")
+            ]
+        )
+        cardBodyValPlau = dbc.CardBody(
+            [
+                html.H5("Valores Plausibles", className="card-title"),
+                # html.P("Departamentos filtrados por zona"),
+                dbc.CardLink("Ir", href="/valplausibles",className="link-ir")
+            ]
+        )
+        cardBodyValEstu = dbc.CardBody(
+            [
+                html.H5("Estudiantes", className="card-title"),
+                # html.P("Departamentos filtrados por zona"),
+                dbc.CardLink("Ir", href="/estudiantes",className="link-ir")
+            ]
+        )
+        cardBodyAnalisis = dbc.CardBody(
+            [
+                html.H5("Análisis de datos", className="card-title"),
+                # html.P("Departamentos filtrados por zona"),
+                dbc.CardLink("Ir",href="/analisis",className="link-ir")
+            ]
+        )
+
+        contenedorCards = html.Div(
+            [
+                dbc.Row(
+                    [
+                        dbc.Col(dbc.Card(cardBodyDeptos, color="#008000", inverse=True)),
+                        dbc.Col(dbc.Card(cardBodyZona, color="#008000", inverse=True)),
+                        dbc.Col(dbc.Card(cardBodyMpio, color="#008000", inverse=True))
+                    ],
+                    className="mb-4",
+                ),
+                dbc.Row(
+                    [
+                        dbc.Col(dbc.Card(cardBodyEnt, color="#a45302", inverse=True)),
+                        dbc.Col(dbc.Card(cardBodyEst, color="#a45302", inverse=True)),
+                        dbc.Col(dbc.Card(cardBodySede, color="#a45302", inverse=True))
+                    ],
+                    className="mb-4",
+                ),
+                dbc.Row(
+                    [
+                        dbc.Col(dbc.Card(cardBodyValPlau, color="#352b2b", inverse=True)),
+                        dbc.Col(dbc.Card(cardBodyValEstu, color="#352b2b", inverse=True)),
+                        dbc.Col(dbc.Card(cardBodyAnalisis, color="#352b2b", inverse=True))
+                    ],
+                    className="mb-4",
                 )
             ]
         )
-        upload = dcc.Upload(
-            id='upload-data',
-            children=html.Div([
-                'Arrastre el archivo o ',
-                html.A('Seleccione un archivo')
-            ]),
-            style={
-                'width': '100%',
-                'height': '60px',
-                'lineHeight': '60px',
-                'borderWidth': '1px',
-                'borderStyle': 'dashed',
-                'borderRadius': '5px',
-                'textAlign': 'center',
-                'margin': '10px'
-            },
-            multiple=True               
-        )
 
+        contenedorPresentacion = html.Div(className='presentacion', children=
+                [
+                    html.H1(children=['Bienvenido!']),
+                    contenedorCards
+                ]
+        )
+        
         return [
             header,
-            html.Div(className='resultado-pestana', children=[
-                inputSeparador,
-                upload,
-                # Mostrará la tabla según el archivo subido.                         
-                html.Div(id='output-data-upload'),
-                # Mostrará la información del atributo escogido en la tabla.
-                html.Div(id='info-atributo')
-            ])
-        ]
+            contenedorPresentacion
+                                    
+        ]        
     elif pathname == "/departamento":
         
         # Guarda los datos que se generan en el callback de creación de la tabs para poder utilizarlo en una tab diferente a Tabla.
@@ -627,13 +692,70 @@ def update_contenido_pagina(pathname):
                 inicializar_tabs_estudiantes()
             ])
         ]
-    # Si se intenta acceder a url que no existe, se muestra un mensaje de error.
-    return dbc.Jumbotron(
-        [
-            html.H1("404: Not found", className="text-danger"),
-            html.Hr(),
-            html.P(f"The pathname {pathname} was not recognised..."),
+    if pathname == "/analisis":
+        header =  html.Div(className='header', children=[
+            html.H1(children='Análisis de datos'),
+        ])
+
+        inputSeparador = html.Div(
+            [
+                dbc.Label("Separador"),
+                dbc.Input(
+                    id='txfsep',
+                    placeholder="Por defecto es '|'",
+                    type="text",
+                    size=22
+                )
+            ]
+        )
+        upload = dcc.Upload(
+            id='upload-data',
+            children=html.Div([
+                'Arrastre el archivo o ',
+                html.A('Seleccione un archivo')
+            ]),
+            style={
+                'width': '100%',
+                'height': '60px',
+                'lineHeight': '60px',
+                'borderWidth': '1px',
+                'borderStyle': 'dashed',
+                'borderRadius': '5px',
+                'textAlign': 'center',
+                'margin': '10px'
+            },
+            multiple=True               
+        )
+
+        return [
+            header,
+            html.Div(className='resultado-pestana', children=[
+                inputSeparador,
+                upload,
+                # Mostrará la tabla según el archivo subido.                         
+                html.Div(id='output-data-upload'),
+                # Mostrará la información del atributo escogido en la tabla.
+                html.Div(id='info-atributo')
+            ])
         ]
+    # Si se intenta acceder a url que no existe, se muestra un mensaje de error.
+    return html.Div(
+        dbc.Container(
+            [
+                html.H1("404: Not found", className="display-3"),
+                html.P(
+                    f"La ruta {pathname} no fue reconocida...",
+                    className="lead",
+                ),
+                html.Hr(className="my-2"),
+                html.P(
+                    "Verifique el link o ruta a la que está intentando acceder."
+                )                
+            ],
+            fluid=True,
+            className="py-3",
+        ),
+        className="p-3 bg-light rounded-3",
     )
 
 '''=================CALLBACKS EN ANÁLISIS================='''

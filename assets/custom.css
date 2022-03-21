@@ -90,3 +90,27 @@
 .tab a:hover{
     color: var(--color-principal);
 }
+
+.info-general{
+    padding-bottom: 1rem;
+}
+
+.presentacion{
+    margin: 2rem;
+}
+.presentacion h1{
+    color : var(--color-secundario);
+    margin-bottom: 1rem;
+}
+
+.link-ir{
+    background-color: #f1f1f1;
+    color: black;
+    padding: 8px 16px;
+    text-decoration: none;
+    float: right;
+    border-radius: 50%;
+}
+.link-ir:hover{
+    background-color: #ddd;
+}

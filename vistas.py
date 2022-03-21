@@ -215,7 +215,7 @@ def generar_info_general(nombre_seleccion,df_seleccion,variable_analizada='gener
         if ('N' in df_seleccion and df_seleccion['N'].values.size != 0):
             num_participantes = html.P('Número de participantes: ' + str(*df_seleccion['N'].values))
 
-    info_general = html.Div([
+    info_general = html.Div(className="info-general",children=[
         header,
         num_participantes,
         promedio,
