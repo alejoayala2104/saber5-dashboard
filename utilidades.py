@@ -5,11 +5,11 @@ def calcular_cuartil_rendimiento(puntaje):
         puntaje (object): Entero con el puntaje de rendimiento académico.
     """
 
-    if(puntaje<=100):
+    if(puntaje<=125):
         cuartil = "Pésimo (Q1)"
-    elif(puntaje<=200):
+    elif(puntaje<=250):
         cuartil = "Malo (Q2)"
-    elif(puntaje<=300):
+    elif(puntaje<=375):
         cuartil = "Regular (Q3)"
     else:
         cuartil = "Bueno (Q4)"

@@ -711,8 +711,8 @@ def update_contenido_pagina(pathname):
         upload = dcc.Upload(
             id='upload-data',
             children=html.Div([
-                'Arrastre el archivo o ',
-                html.A('Seleccione un archivo')
+                'Arrastre o ',
+                html.A('seleccione un archivo')
             ]),
             style={
                 'width': '100%',
@@ -1554,4 +1554,4 @@ if __name__=='__main__':
     # app.enable_dev_tools(
     #     dev_tools_prune_errors=False
     # )
-    app.run_server(debug=True,port=3000)
+    app.run_server(debug=False,port=3000)

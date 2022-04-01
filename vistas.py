@@ -188,7 +188,8 @@ def generar_info_general(nombre_seleccion,df_seleccion,variable_analizada='gener
         promedio = html.P('Puntaje promedio: ' + str(*df_seleccion['PUNTAJE_PROMEDIO'].values))
 
         # Calcula el cuartil según el puntaje numérico. Se debe hacer un parse a int porque Dataframe.values devuelve un nparray.
-        cuartil = calcular_cuartil_rendimiento(int(*df_seleccion['PUNTAJE_PROMEDIO'].values))
+        cuartil_calculado = calcular_cuartil_rendimiento(int(*df_seleccion['PUNTAJE_PROMEDIO'].values))
+        cuartil = html.P('Cuartil: ' + str(cuartil_calculado))
     
     # Se valida si el dataframe tiene desviación
     if ('DESVIACION' in df_seleccion and df_seleccion['DESVIACION'].values.size != 0):
@@ -203,7 +204,8 @@ def generar_info_general(nombre_seleccion,df_seleccion,variable_analizada='gener
         promedio = html.P('Puntaje promedio: ' + str(*df_seleccion['PROMEDIO'].values))
 
         # Calcula el cuartil según el puntaje numérico. Se debe hacer un parse a int porque Dataframe.values devuelve un nparray.
-        cuartil = calcular_cuartil_rendimiento(int(*df_seleccion['PROMEDIO'].values))
+        cuartil_calculado = calcular_cuartil_rendimiento(int(*df_seleccion['PROMEDIO'].values))
+        cuartil = html.P('Cuartil: ' + str(cuartil_calculado))
 
     elif('sede' in variable_analizada):
         num_participantes = html.Div([
